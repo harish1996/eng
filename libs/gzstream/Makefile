@@ -77,6 +77,9 @@ test_gzip : test_gzip.o libgzstream.a
 test_gunzip : test_gunzip.o libgzstream.a
 	${CXX} -o test_gunzip test_gunzip.o ${LDFLAGS}
 
+test_gunzipread: test_gunzipread.o libgzstream.a
+	${CXX} -o test_gunzipread test_gunzipread.o ${LDFLAGS}
+
 clean :
 	rm *.o
 
