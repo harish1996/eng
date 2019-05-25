@@ -3,7 +3,7 @@ LIBS=${BASE}/libs
 GZSTREAM=${LIBS}/gzstream
 SHA1=${LIBS}/sha1
 
-CPPFLAGS=-g -I${BASE} -I${GZSTREAM} -O
+CPPFLAGS=-g -I${BASE} -I${GZSTREAM} -Wall
 LDFLAGS=-L${BASE} -L${GZSTREAM} -lgzstream -lz
 AR=ar cr
 
@@ -17,3 +17,7 @@ ${GZSTREAM}/libgzstream.a:
 
 %.o: %.cpp
 	g++ ${CPPFLAGS} -c $^ -o $@
+
+clean:
+	@rm -f objects
+	@rm -f *.o
