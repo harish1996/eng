@@ -131,24 +131,16 @@ int OBJ::object_type()
 
 int OBJ::cat_blob_object( )
 {
-//	int ret = get_new_object( hash );
 	if( hash.empty() )
 		return -1;
 
 	if( type != BLOB_OBJECT )
 		return -3;
 
-	//char c;
 
 	char buf[BUF_SIZE+1];
-	//int pos;
 
 	read_object( buf, BUF_SIZE );
-
-	//pos = objstream.tellg();
-	//objstream.seekg( 0, objstream.end );
-	//std::cout<<objstream.tellg();
-	//objstream.seekg( pos, objstream.beg );
 
 	while( !objstream.eof() && !objstream.fail() ){
 		buf[BUF_SIZE] = 0;
@@ -163,7 +155,7 @@ int OBJ::cat_blob_object( )
 }
 
 
-
+/*
 void usage( char *arg )
 {
 	std::cout<<arg<<" <cmd> <infile>\n";
@@ -209,3 +201,4 @@ int main( int argc, char* argv[] )
 
 	return 0;
 }
+*/
