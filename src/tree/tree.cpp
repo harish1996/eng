@@ -58,11 +58,81 @@ public:
 	// Creates the tree object recursively.
 	int write_tree( std::string &hash );
 	int destroy_tree();
+	std::map<std::string,struct entry>::const_iterator cbegin();
+	std::map<std::string,struct entry>::const_iterator cend();
+	void cat();
 	~TREE();
 };
 
 int TREE::open_tree( std::string hash )
 {
+	int ret;
+	std::stringstream stream;
+	char buf[256];
+	bool empty = false;
+	struct entry tmp;
+	std::string name;
+	char hash[20];
+
+	// Clear contents to ensure old values arent sticking around
+	contents.clear();
+
+	ret = get_new_object( hash );
+	if( ret != 1 )
+		return -1;
+	
+	// Throw error if the hash doesnt correspond to tree object
+	ret = object_type();
+	if( ret != TREE_OBJECT )
+		return -2;
+	
+	// Read the entire object
+	do {
+		ret = read_object( buf, 256 );
+		if( ret > 0 )
+			stream.write( buf, ret );
+	}while( ret == 256 );
+	
+	while( !empty ){
+		int written;
+
+		name.clear();
+		stream.read( &tmp.type, 2 );
+		if( stream.gcount() != 2 ){
+			empty = true;
+			break;
+		}
+		stream.read( hash, 20 );
+		if( stream.gcount() != 20 ){
+			empty = true;
+			break;
+		}
+		ret = hash_numtostr( &tmp.hash, hash );
+		// Precautionary measure if the name is too large
+		do{
+			stream.getline( &buf, 256, 0 );
+			written = stream.gcount();
+			if( written > 0 )
+				name = name + buf;
+			if( written != 256 )
+				break;
+		}while(1);
+
+		// If the object is a tree, allocate the s_tree object
+		if( TYPE(tmp.type) == TREE ){
+			tmp.s_tree = new struct subtree();
+			tmp.s_tree->modified = false;
+			tmp.s_tree->subtree = NULL;
+		}
+
+		// Finally add the element to the map
+		contents.insert( std::pair<std::string, struct entry>(name,tmp) );
+	}
+
+	old_hash = hash;
+	modified = false;
+
+	return 0;
 
 }
 
@@ -81,6 +151,9 @@ int TREE::write_tree( std::string& hash )
 		if( TYPE(it->second->type) == TREE ){
 			subtree = it->second->s_tree->subtree;
 			if( it->second->s_tree->modified == true ){
+				if( subtree == NULL ){
+					return -3;
+				}
 				ret = subtree->write_tree( &it->hash );
 				if( ret != WRITE_SUCCESS ){
 					return -1;
