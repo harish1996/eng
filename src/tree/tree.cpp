@@ -2,6 +2,18 @@
 #include <stdint.h>
 #include <sstream>
 
+int first_dirname( const std::string path, std::string &dir )
+{
+	std::size_t found = path.find_first_of("/");
+	if( found == std::string::npos){
+		return -1;
+	}
+	else{
+		dir = path.substr(0,found);
+		return found;
+	}
+}
+
 struct entry {
 
 #define OTHERS_MASK	0x0007
@@ -33,6 +45,20 @@ struct entry {
 struct subtree {
 	bool modified;
 	TREE *subtree;
+	subtree(): modified(false) {}
+	subtree( std::string hash ){
+		subtree = new TREE();
+		int ret = subtree->open_tree( hash );
+		if( ret != 0 )
+			modified = false;
+		else
+			modified = true;
+	}
+	~subtree(){
+		if( subtree != NULL ){
+			delete subtree;
+		}
+	}
 };
 
 class TREE : protected OBJ{
@@ -42,7 +68,8 @@ private:
 	std::string old_hash;
 	//std::vector<struct entry> contents;
 	std::map<std::string,struct entry> contents;
-
+	int _get_local_subtree( std::string dirname, std::string& hash );
+	int _get_local_entry( std::string dirname, struct entry& *entry )	
 public:
 	TREE(): modified(false) {}
 	int open_tree( std::string hash );
@@ -175,12 +202,94 @@ int TREE::write_tree( std::string& hash )
 
 	return WRITE_SUCCESS;
 }	
-		
 
 int TREE::create_tree()
 {
 	modified = true;
 }
 
-//int TREE::get_subtree
+int TREE::_get_local_subtree( std::string dirname, std::string& hash )
+{
+	auto ret = contents.find( dirname );
+	if( ret == contents.end())
+		return -1;
+	else{
+		if( TYPE(ret->second.type) == TREE ){
+			hash = ret->second.hash;
+			return 0;
+		}
+		else{
+			return -2;
+		}
+	}
+}
 
+int TREE::_get_local_entry( std::string dirname, struct entry& *entry )
+{
+	auto ret = contents.find( dirname );
+	if( ret == contents.end() )
+		return -1;
+	else{
+		entry = &ret->second;
+		return 0;
+	}
+}
+
+int TREE::get_subtree( std::string dirname, std::string& hash )
+{
+	// subtree is for the immediate subtree in this tree node
+	// depth is for the remaining path
+	std::string subtree,depth;
+
+	// Extracts the first dirname to be searched under this tree node
+	int tmp = first_dirname( dirname, subtree );
+	
+	// If there is a subfolder/file character
+	if( tmp >= 0 ){
+
+		// Subfolder/file turns out to be empty ( eg. abc/ is a valid directory name )
+		if( tmp == dirname.size() - 1 )
+			return _get_local_subtree( dirname, hash );
+
+		// Subfolder/file is present
+		else{
+			struct entry *ptr;
+
+			// Remaining path
+			depth = dirname.substr(found+1,dirname.size() - found - 1);
+			
+			// Get the entry of the corresponding subtree hash 
+			int ret = _get_local_entry( subtree, ptr );
+
+			// Return failure if there are no entries with the subtree name
+			if( ret == -1 )
+				return -1;
+
+			// If there is a valid entry
+			else{
+				// If the entry is a valid tree object
+				if( TYPE(ptr->type) == TREE ){
+
+					// If the tree is already not open
+					if( ptr->s_tree == NULL ){
+
+						// Allocate memory for a subtree and call subTREE's get_subtree function
+						ptr->s_tree = new subtree( ptr->hash );
+						return ptr->s_tree->subtree->get_subtree( depth, hash );
+					}
+					else
+						return ptr->s_tree->subtree->get_subtree( depth, hash );
+				}
+				// If the entry is not a tree object return -2
+				else{
+					return -2;
+				}
+
+			}
+		}
+	}
+	// If there is no / character => Search for the directory name directly in this folder
+	else
+		return _get_local_subtree( dirname, hash );
+	
+}

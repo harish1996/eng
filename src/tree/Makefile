@@ -23,6 +23,9 @@ ${GZSTREAM}/libgzstream.a:
 %.o: %.cpp
 	g++ ${CPPFLAGS} -c $^ -o $@
 
+test: test.o
+	g++ ${CPPFLAGS} $^ -o $@ ${LDFLAGS}
+
 clean:
 	@rm -f tree
 	@rm -f *.o
