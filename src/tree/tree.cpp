@@ -68,12 +68,15 @@ private:
 	std::string old_hash;
 	//std::vector<struct entry> contents;
 	std::map<std::string,struct entry> contents;
+	int _get_local_object( std::string name, std::string& hash, int type );
 	int _get_local_subtree( std::string dirname, std::string& hash );
+	int _get_local_blob( std::string filename, std::string& hash );
 	int _get_local_entry( std::string dirname, struct entry& *entry )	
 public:
 	TREE(): modified(false) {}
 	int open_tree( std::string hash );
 	int create_tree();
+	int _get_object( std::string name, std::string& hash, int type );
 	int get_subtree( std::string dirname, std::string& hash );
 	int get_blob( std::string filename, std::string& hash );
 	int add_subtree( std::string treename, std::string hash );
@@ -208,13 +211,13 @@ int TREE::create_tree()
 	modified = true;
 }
 
-int TREE::_get_local_subtree( std::string dirname, std::string& hash )
+int TREE::_get_local_object( std::string name, std::string& hash, int type )
 {
 	auto ret = contents.find( dirname );
 	if( ret == contents.end())
 		return -1;
 	else{
-		if( TYPE(ret->second.type) == TREE ){
+		if( TYPE(ret->second.type) == type ){
 			hash = ret->second.hash;
 			return 0;
 		}
@@ -222,6 +225,16 @@ int TREE::_get_local_subtree( std::string dirname, std::string& hash )
 			return -2;
 		}
 	}
+}
+
+int TREE::_get_local_subtree( std::string dirname, std::string& hash )
+{
+	return _get_local_object( dirname, hash, TREE );
+}
+
+int TREE::_get_local_blob( std::string filename, std::string& hash )
+{
+	return _get_local_object( filename, hash, BLOB );
 }
 
 int TREE::_get_local_entry( std::string dirname, struct entry& *entry )
@@ -235,8 +248,11 @@ int TREE::_get_local_entry( std::string dirname, struct entry& *entry )
 	}
 }
 
-int TREE::get_subtree( std::string dirname, std::string& hash )
+int TREE::_get_object( std::string name, std::string& hash, int type )
 {
+
+	if( name[name.size() - 1] == '/' && type == BLOB )
+		return -3;
 	// subtree is for the immediate subtree in this tree node
 	// depth is for the remaining path
 	std::string subtree,depth;
@@ -275,10 +291,10 @@ int TREE::get_subtree( std::string dirname, std::string& hash )
 
 						// Allocate memory for a subtree and call subTREE's get_subtree function
 						ptr->s_tree = new subtree( ptr->hash );
-						return ptr->s_tree->subtree->get_subtree( depth, hash );
+						return ptr->s_tree->subtree->_get_object( depth, hash, type );
 					}
 					else
-						return ptr->s_tree->subtree->get_subtree( depth, hash );
+						return ptr->s_tree->subtree->_get_object( depth, hash, type );
 				}
 				// If the entry is not a tree object return -2
 				else{
@@ -290,6 +306,15 @@ int TREE::get_subtree( std::string dirname, std::string& hash )
 	}
 	// If there is no / character => Search for the directory name directly in this folder
 	else
-		return _get_local_subtree( dirname, hash );
+		return _get_local_object( dirname, hash, type );
 	
+}
+int TREE::get_subtree( std::string dirname, std::string& hash )
+{
+	return _get_object( dirname, hash, TREE );
+}
+
+int TREE::get_blob( std::string filename, std::string &hash )
+{
+	return _get_object( filename, hash, BLOB );
 }
