@@ -14,23 +14,36 @@ int first_dirname( const std::string path, std::string &dir )
 	}
 }
 
+int filename( const std::string path, std::string &fname )
+{
+	std::size_t found = path.find_last_of("/");
+	if( found == std::string::npos ){
+		return -1;
+	}
+	else{
+		fname = path.substr(found+1);
+		return found;
+	}
+}
+
 struct entry {
 
 #define OTHERS_MASK	0x0007
 #define OTHERS_SHIFT	0
-#define OTHERS_PERM(x) (( x | OTHERS_MASK ) >> OTHERS_SHIFT)
+#define OTHERS_PERM(x) (( x & OTHERS_MASK ) >> OTHERS_SHIFT)
 
 #define GROUPS_MASK	0x0038
 #define GROUPS_SHIFT	3
-#define GROUPS_PERM(x) (( x | GROUPS_MASK ) >> GROUPS_SHIFT)
+#define GROUPS_PERM(x) (( x & GROUPS_MASK ) >> GROUPS_SHIFT)
 
 #define USERS_MASK	0x01C0
 #define USERS_SHIFT	6
-#define USERS_PERM(x) (( x | USERS_MASK ) >> USERS_SHIFT)
+#define USERS_PERM(x) (( x & USERS_MASK ) >> USERS_SHIFT)
 
 #define TYPES_MASK	0xFE00
 #define TYPES_SHIFT	9
-#define TYPE(x)		(( x | TYPES_MASK ) >> TYPES_SHIFT)
+#define TYPE(x)		(( x & TYPES_MASK ) >> TYPES_SHIFT)
+#define SET_TYPE(t,x)	t = ( ( t & ~MASK ) | ( x << TYPES_SHIFT ) )
 
 #define TREE	0
 #define BLOB	1
@@ -68,14 +81,17 @@ private:
 	std::string old_hash;
 	//std::vector<struct entry> contents;
 	std::map<std::string,struct entry> contents;
+	int _add_local_object( std::string name, std::string hash, int type );
 	int _get_local_object( std::string name, std::string& hash, int type );
 	int _get_local_subtree( std::string dirname, std::string& hash );
 	int _get_local_blob( std::string filename, std::string& hash );
 	int _get_local_entry( std::string dirname, struct entry& *entry )	
+	int _get_child_tree( std::string dirname, TREE& *tree );
 public:
 	TREE(): modified(false) {}
 	int open_tree( std::string hash );
 	int create_tree();
+	int _get_immediate_parent_tree( std::string name, TREE& *parent );
 	int _get_object( std::string name, std::string& hash, int type );
 	int get_subtree( std::string dirname, std::string& hash );
 	int get_blob( std::string filename, std::string& hash );
@@ -93,6 +109,154 @@ public:
 	void cat();
 	~TREE();
 };
+
+/**
+ * @func _add_local_object
+ * @brief Helper function for adding a object entry in the current tree
+ *
+ * @param name Name of the object
+ * @param hash Hash of the object
+ * @param type Type of the object
+ *
+ * @return 0 on success
+ */
+int TREE::_add_local_object( std::string name, std::string hash, int type )
+{
+	struct entry tmp;
+
+	SET_TYPE(tmp.type,type);
+	tmp.hash = hash;
+	tmp.s_tree = NULL;
+
+	modified = true;
+
+	contents.insert( std::pair<std::string, struct entry>(name,tmp) );
+
+	return 0;
+}
+
+/**
+ * @func _get_child_tree
+ * @brief Helper function for the class to get the child TREE object ptr
+ *
+ * @param name Name of the tree
+ * @param tree Pointer to return the TREE object
+ *
+ * @return GET_SUCCESS on success 
+ *	-EGET_NO_ENTRY if a valid entry is not present in the current tree
+ *	-EGET_NO_TREE if the object with `name` is not a tree
+ *	-EGET_NO_MEM if memory not available to allocate data structure for subtree
+ */
+int TREE::_get_child_tree( std::string name, TREE& *tree )
+{
+	struct entry *tmp;
+	int ret = _get_local_entry( name, tmp );
+	if( ret == -EGET_NO_ENTRY )
+		return -EGET_NO_ENTRY;
+	if( TYPE(tmp->type) != TREE )
+		return -EGET_NO_TREE;
+
+	// Allocate memory for subtree if and only when needed. This will inturn allocate memory
+	// for TREE objects below in the heirarchy
+	if( tmp->s_tree == NULL ){
+		tmp->s_tree = new subtree( tmp->hash );
+		if( !tmp->s_tree || !tmp->s_tree->subtree )
+			return -EGET_NO_MEM;
+	}
+
+	tree = tmp->s_tree->subtree;
+	return GET_SUCCESS;
+}
+
+/**
+ * @brief _get_immediate_parent_tree
+ * @func Gets the immediate parent TREE of the given path of a file/directory.
+ *
+ * @param name The entire path of the file/directory
+ * @param parent Pointer to return the TREE object
+ *
+ * @return GET_SUCCESS on success
+ *	-EGET_NOPARENT if path contains a direct file/directory without any parent
+ *	Other errors mentioned for `_get_child_tree`
+ */
+int TREE::_get_immediate_parent_tree( std::string name, TREE& *parent )
+{
+	std::string h,subtree,depth;
+	int ret;
+
+	int tmp = first_dirname( dirname, subtree );
+	if( tmp >= 0 ){
+		// If the `name` itself is in the current tree
+		if( tmp == dirname.size() - 1 )
+			return _get_child_tree( subtree, parent );
+		else{
+			//struct entry *ptr;
+			TREE *ptr;
+			// Extract the remaining of the pathname from the fullpath `name`
+			depth = dirname.substr( tmp+1, dirname.size() - tmp - 1 );
+			ret = _get_child_tree( subtree, ptr );
+		       	if( ret != GET_SUCCESS )
+				return ret;
+			return ptr->_get_immediate_parent_tree( depth, parent );
+		}
+	}
+	else
+		return -EGET_NOPARENT;
+}
+			
+enum add_errors{
+	ADD_SUCCESS = 0,
+	EADD_EXIST,
+	EADD_EXISTN,
+	EADD_INVNAME,
+	EADD_NOSUBD,
+	EADD_INVHASH
+}
+
+int TREE::_add_object( std::string name, std::string hash, int type )
+{
+	if( treename.len() <= 0 )
+		return -EADD_INVNAME;
+	if( hash.len() != 40 )
+		return -EADD_INVHASH;
+	
+	std::string h,subtree,depth;
+	int ret;
+	TREE *ptr;
+
+	// Check for duplicates
+	ret = _get_object( name, h, type );
+	if( ret == GET_SUCCESS )
+		return -EADD_EXIST;
+	else if( ret == -EGET_TYPE )
+		return -EADD_EXISTN;
+	else if( ret == -EGET_INV_NAME )
+		return -EADD_INVNAME;
+	else if( ret == -EGET_NO_SUBDIR || ret == -EGET_NO_ENTRY )
+		return -EADD_NOSUBD;
+	
+	// Add one object in the immediate parent
+	ret = _get_immediate_parent_tree( name, ptr );
+	if( ret == -EGET_NOPARENT )
+		return _add_local_object( name, hash, type );
+	else if( ret == GET_SUCCESS ){
+		// Extracts filename from fullpath `name`
+		ret = filename( name, depth );
+		return ptr->_add_object( depth, hash, type );
+	}
+	else
+		return ret;
+}
+
+int TREE::add_subtree( std::string treename, std::string hash )
+{
+	return _add_object( treename, hash, TREE );
+}
+
+int TREE::add_blob( std::string filename, std::string hash )
+{
+	return _add_object( filename, hash, BLOB );
+}
 
 int TREE::open_tree( std::string hash )
 {
@@ -148,12 +312,7 @@ int TREE::open_tree( std::string hash )
 				break;
 		}while(1);
 
-		// If the object is a tree, allocate the s_tree object
-		if( TYPE(tmp.type) == TREE ){
-			tmp.s_tree = new struct subtree();
-			tmp.s_tree->modified = false;
-			tmp.s_tree->subtree = NULL;
-		}
+		tmp.s_tree = NULL;
 
 		// Finally add the element to the map
 		contents.insert( std::pair<std::string, struct entry>(name,tmp) );
@@ -210,19 +369,28 @@ int TREE::create_tree()
 {
 	modified = true;
 }
-
+enum get_errors{
+	SUCCESS = 0,
+	ENO_OBJECT,
+	E_TYPE,
+	ENO_ENTRY,
+	EINV_NAME,
+	ENO_SUBDIR,
+	ENO_TREE
+};
+	
 int TREE::_get_local_object( std::string name, std::string& hash, int type )
 {
 	auto ret = contents.find( dirname );
 	if( ret == contents.end())
-		return -1;
+		return -ENO_OBJECT;
 	else{
 		if( TYPE(ret->second.type) == type ){
 			hash = ret->second.hash;
-			return 0;
+			return SUCCESS;
 		}
 		else{
-			return -2;
+			return -E_TYPE;
 		}
 	}
 }
@@ -241,10 +409,10 @@ int TREE::_get_local_entry( std::string dirname, struct entry& *entry )
 {
 	auto ret = contents.find( dirname );
 	if( ret == contents.end() )
-		return -1;
+		return -ENO_ENTRY;
 	else{
 		entry = &ret->second;
-		return 0;
+		return SUCCESS;
 	}
 }
 
@@ -252,7 +420,7 @@ int TREE::_get_object( std::string name, std::string& hash, int type )
 {
 
 	if( name[name.size() - 1] == '/' && type == BLOB )
-		return -3;
+		return -EINV_NAME;
 	// subtree is for the immediate subtree in this tree node
 	// depth is for the remaining path
 	std::string subtree,depth;
@@ -278,8 +446,8 @@ int TREE::_get_object( std::string name, std::string& hash, int type )
 			int ret = _get_local_entry( subtree, ptr );
 
 			// Return failure if there are no entries with the subtree name
-			if( ret == -1 )
-				return -1;
+			if( ret == -ENO_ENTRY )
+				return -ENO_ENTRY;
 
 			// If there is a valid entry
 			else{
@@ -298,7 +466,7 @@ int TREE::_get_object( std::string name, std::string& hash, int type )
 				}
 				// If the entry is not a tree object return -2
 				else{
-					return -2;
+					return -ENO_SUBDIR;
 				}
 
 			}
