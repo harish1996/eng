@@ -70,18 +70,38 @@ int TREE::_get_child_tree( std::string name, TREE& *tree )
 	int ret = _get_local_entry( name, tmp );
 	if( ret == -EGET_NO_ENTRY )
 		return -EGET_NO_ENTRY;
-	if( TYPE(tmp->type) != TREE )
+
+	return _get_child_tree( tmp, tree );
+}
+
+/**
+ * @func _get_child_tree
+ * @brief Helper function for the class to get the child TREE object ptr
+ *
+ * @param entry Entry of the corresponding subtree
+ * @param tree Pointer to return the TREE object
+ *
+ * @return GET_SUCCESS on success 
+ *	-EGET_NO_ENTRY if a valid entry is not present in the current tree
+ *	-EGET_NO_TREE if the object with `name` is not a tree
+ *	-EGET_NO_MEM if memory not available to allocate data structure for subtree
+ */
+int TREE::_get_child_tree( struct entry *entry, TREE* &tree )
+{
+	if( !entry )
+		return -EGET_NO_ENTRY;
+	if( TYPE(entry->type) != TREE )
 		return -EGET_NO_TREE;
 
 	// Allocate memory for subtree if and only when needed. This will inturn allocate memory
 	// for TREE objects below in the heirarchy
-	if( tmp->s_tree == NULL ){
-		tmp->s_tree = new subtree( tmp->hash );
-		if( !tmp->s_tree || !tmp->s_tree->subtree )
+	if( entry->s_tree == NULL ){
+		entry->s_tree = new subtree( entry->hash );
+		if( !entry->s_tree || !entry->s_tree->subtree )
 			return -EGET_NO_MEM;
 	}
 
-	tree = tmp->s_tree->subtree;
+	tree = entry->s_tree->subtree;
 	return GET_SUCCESS;
 }
 
@@ -120,6 +140,39 @@ int TREE::_get_immediate_parent_tree( std::string name, TREE& *parent )
 	else
 		return -EGET_NOPARENT;
 }
+
+/**
+ * @func _get_next_dir
+ * @brief Gets the entry of the next directory in line, and also returns the
+ * remaining path with it.
+ *
+ * @param name Full path from the current tree as root
+ * @param parent The placeholder for the entry that is going to be returned
+ * @param depth The placeholder for the returning the remaining path
+ *
+ * @return GET_SUCCESS on successful retrieval
+ * 	-EGET_NOENTRY if the subdirectory mentioned in the path doesn't exist
+ * 	-EGET_NOPARENT if the path doesn't contain a subdirectory
+ */
+int TREE::_get_next_dir( std::string name, struct entry* &parent, std::string &depth )
+{
+	std::string subtree;
+	int ret;
+
+	int tmp = first_dirname( dirname, subtree );
+	if( tmp >= 0 ){
+		if( tmp == dirname.size() - 1 ){
+			depth.clear();
+			return _get_local_entry( subtree, parent );
+		}
+		else{
+			depth = dirname.substr( tmp+1, dirname.size() - tmp - 1 );
+			return _get_local_entry( subtree, parent );
+		}
+	}
+	else
+		return -EGET_NOPARENT;
+}
 			
 enum add_errors{
 	ADD_SUCCESS = 0,
@@ -127,7 +180,8 @@ enum add_errors{
 	EADD_EXISTN,
 	EADD_INVNAME,
 	EADD_NOSUBD,
-	EADD_INVHASH
+	EADD_INVHASH,
+	EADD_NO_MEM
 }
 
 /**
@@ -144,6 +198,7 @@ enum add_errors{
  * 	-EADD_INVNAME if `name` is invalid
  *	-EADD_NOSUBD if the path has some invalid directory
  *	-EADD_INVHASH if the hash is invalid
+ *	-EADD_NO_MEM if error regarding unavailability of memory.
  */
 int TREE::_add_object( std::string name, std::string hash, int type )
 {
@@ -153,8 +208,8 @@ int TREE::_add_object( std::string name, std::string hash, int type )
 		return -EADD_INVHASH;
 	
 	std::string h,subtree,depth;
-	int ret;
-	TREE *ptr;
+	int ret,tmp;
+	struct entry *ptr;
 
 	// Check for duplicates
 	ret = _get_object( name, h, type );
@@ -166,18 +221,46 @@ int TREE::_add_object( std::string name, std::string hash, int type )
 		return -EADD_INVNAME;
 	else if( ret == -EGET_NO_SUBDIR || ret == -EGET_NO_ENTRY )
 		return -EADD_NOSUBD;
-	
-	// Add one object in the immediate parent
-	ret = _get_immediate_parent_tree( name, ptr );
-	if( ret == -EGET_NOPARENT )
-		return _add_local_object( name, hash, type );
-	else if( ret == GET_SUCCESS ){
-		// Extracts filename from fullpath `name`
-		ret = filename( name, depth );
-		return ptr->_add_object( depth, hash, type );
+
+	// Get the directory which is next inorder in the given path
+	ret = _get_next_dir( name, ptr, depth );
+	switch(ret){
+		case -EGET_NOENTRY:
+			return -EADD_NOSUBD;
+		// If the path contains no subdirectories, just add the
+		// element directly in this tree, if no such entry is
+		// already present
+		case -EGET_NOPARENT:{
+			tmp = _get_local_entry( name, ptr );
+			if( tmp == -EGET_NO_ENTRY )
+				return _add_local_object( name, hash, type );
+			else
+				return -EADD_EXIST;
+		}
+		// If the path has a subdirectory and the subdirectory 
+		// exists, pass on the remaining path to the 
+		// _add_object of that tree, and then mark the
+		// modified flag
+		case GET_SUCCESS:{
+			TREE *tree = NULL;
+			tmp = _get_child_tree( ptr, tree );
+			if( tmp != GET_SUCCESS || tree == NULL  ){
+				if( tmp == -EGET_NO_MEM )
+					return -EADD_NO_MEM;
+				else
+					return -EADD_NOSUBD;
+			}
+			else{
+				tmp = tree->_add_object( depth, hash, type );
+				if( tmp != ADD_SUCCESS )
+					return tmp;
+				else{
+					ptr->s_tree->modified = true;
+					return ADD_SUCCESS;
+				}
+			}
+		}
 	}
-	else
-		return ret;
 }
 
 int TREE::add_subtree( std::string treename, std::string hash )
