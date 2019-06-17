@@ -58,14 +58,15 @@ class TREE : protected OBJ{
 private:
 	bool modified;
 	std::string old_hash;
-	//std::vector<struct entry> contents;
 	std::map<std::string,struct entry> contents;
+
+
 	int _add_local_object( std::string name, std::string hash, int type );
 	int _get_local_object( std::string name, std::string& hash, int type );
 	int _get_local_subtree( std::string dirname, std::string& hash );
 	int _get_local_blob( std::string filename, std::string& hash );
 	int _get_local_entry( std::string dirname, struct entry& *entry );	
-	int _get_child_tree( std::string dirname, TREE& *tree );
+        int _get_child_tree( std::string dirname, TREE& *tree );
 public:
 	TREE(): modified(false) {}
 	int open_tree( std::string hash );

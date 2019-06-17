@@ -25,31 +25,23 @@ int filename( const std::string path, std::string &fname )
 }
 
 /**
- * @func _add_local_object
- * @brief Helper function for adding a object entry in the current tree
+ * @brief TREE::_get_local_entry
+ * Gets the local entry with name `name`
  *
- * @param name Name of the object
- * @param hash Hash of the object
- * @param type Type of the object
- *
- * @return 0 on success
- * 	-EADD_EXIST if object with `name` exists
+ * @param name Name of the local entry
+ * @param entry Variable to hold the value of the entry
+ * @return GET_SUCCESS on success,
+ *      -EGET_NO_ENTRY if no entry with `name` exists
  */
-int TREE::_add_local_object( std::string name, std::string hash, int type )
+int TREE::_get_local_entry( std::string name, struct entry& *entry )
 {
-	struct entry tmp;
-
-	SET_TYPE(tmp.type,type);
-	tmp.hash = hash;
-	tmp.s_tree = NULL;
-
-	modified = true;
-
-	auto ret = contents.insert( std::pair<std::string, struct entry>(name,tmp) );
-	if( ret.second == false )
-		return -EADD_EXIST;
-
-	return 0;
+        auto ret = contents.find( name );
+        if( ret == contents.end() )
+                return -EGET_NO_ENTRY;
+        else{
+                entry = &ret->second;
+                return GET_SUCCESS;
+        }
 }
 
 /**
@@ -183,6 +175,33 @@ enum add_errors{
 	EADD_INVHASH,
 	EADD_NO_MEM
 }
+/**
+ * @func _add_local_object
+ * @brief Helper function for adding a object entry in the current tree
+ *
+ * @param name Name of the object
+ * @param hash Hash of the object
+ * @param type Type of the object
+ *
+ * @return ADD_SUCCESS on success
+ * 	-EADD_EXIST if object with `name` exists
+ */
+int TREE::_add_local_object( std::string name, std::string hash, int type )
+{
+        struct entry tmp;
+
+        SET_TYPE(tmp.type,type);
+        tmp.hash = hash;
+        tmp.s_tree = NULL;
+
+        modified = true;
+
+        auto ret = contents.insert( std::pair<std::string, struct entry>(name,tmp) );
+        if( ret.second == false )
+                return -EADD_EXIST;
+
+        return ADD_SUCCESS;
+}
 
 /**
  * @func _add_object
@@ -217,7 +236,7 @@ int TREE::_add_object( std::string name, std::string hash, int type )
 		return -EADD_EXIST;
 	else if( ret == -EGET_TYPE )
 		return -EADD_EXISTN;
-	else if( ret == -EGET_INV_NAME )
+        else if( ret == -EGET_INVNAME )
 		return -EADD_INVNAME;
 	else if( ret == -EGET_NO_SUBDIR || ret == -EGET_NO_ENTRY )
 		return -EADD_NOSUBD;
@@ -225,12 +244,12 @@ int TREE::_add_object( std::string name, std::string hash, int type )
 	// Get the directory which is next inorder in the given path
 	ret = _get_next_dir( name, ptr, depth );
 	switch(ret){
-		case -EGET_NOENTRY:
+                case -EGET_NO_ENTRY:
 			return -EADD_NOSUBD;
 		// If the path contains no subdirectories, just add the
 		// element directly in this tree, if no such entry is
 		// already present
-		case -EGET_NOPARENT:{
+                case -EGET_NO_PARENT:{
 			tmp = _get_local_entry( name, ptr );
 			if( tmp == -EGET_NO_ENTRY )
 				return _add_local_object( name, hash, type );
@@ -273,6 +292,31 @@ int TREE::add_blob( std::string filename, std::string hash )
 	return _add_object( filename, hash, BLOB );
 }
 
+enum mod_errors{
+    MOD_SUCCESS=0,
+    EMOD_NO_ENTRY,
+    EMOD_TYPE,
+    EMOD_INVNAME,
+    EMOD_INVHASH,
+    EMOD_NO_OBJECT,
+    EMOD_NO_SUBDIR,
+    EMOD_NO_TREE,
+    EMOD_NO_MEM
+};
+
+/**
+ * @brief TREE::_modify_local_object
+ * Modifies the current tree for the given name to the target hash. This function
+ * cannot modify a local object which is of a different type. To do that, the old
+ * object must be deleted and then must be replaced by the new object of the new type.
+ *
+ * @param name Name of the target object, which is being modified
+ * @param hash The new hash of the target object
+ * @param type Type of the new object
+ * @return MOD_SUCCESS on successful modification,
+ *      -EMOD_NO_ENTRY if the local object doesn't exist
+ *      -EMOD_TYPE if the type of the local object is different from the target type
+ */
 int TREE::_modify_local_object( std::string name, std::string hash, int type )
 {
 	struct entry *tmp;
@@ -300,6 +344,25 @@ int TREE::_modify_local_object( std::string name, std::string hash, int type )
 	return MOD_SUCCESS;
 }
 
+/**
+ * @brief TREE::_modify_object
+ *
+ * Modifies a given object with path `name` to the given hash. Modifying across
+ * types is not supported
+ *
+ * @param name The fullpath of the object in question
+ * @param hash The target hash
+ * @param type The target/actual type of the object in question
+ * @return MOD_SUCCESS on successful modification
+ *      -EMOD_INVNAME if the given path is invalid
+ *      -EMOD_INVHASH if the given hash is invalid
+ *      -EMOD_NO_OBJECT if the specified object with `name` doesn't exist
+ *      -EMOD_NO_SUBDIR if the subdirectory in the path doesn't exist
+ *      -EMOD_NO_TREE if any of the subdirectory specified in path, is not a tree
+ *      -EMOD_TYPE if the specified type doesn't match with the object type
+ *      -EMOD_NO_ENTRY if the specified object doesn't have an entry
+ *      -EMOD_NO_MEM if the memory creation during modification failed
+ */
 int TREE::_modify_object( std::string name, std::string hash, int type )
 {
 	TREE *ptr;
@@ -324,11 +387,51 @@ int TREE::_modify_object( std::string name, std::string hash, int type )
 			return -EMOD_INVNAME;
 	}
 
+	// Get the directory which is next inorder in the given path
+	ret = _get_next_dir( name, ptr, depth );
+	switch(ret){
+                case -EGET_NO_ENTRY:
+			return -EMOD_NO_SUBDIR;
+		// If the path contains no subdirectories, search for
+		// the element and modify that if it exists. Otherwise
+		// return an error.
+                case -EGET_NO_PARENT:{
+			tmp = _get_local_entry( name, ptr );
+			if( tmp == -EGET_NO_ENTRY )
+				return -EMOD_NO_ENTRY;
+			else
+				return _modify_local_object( name, hash, type );
+		}
+		// If the path has a subdirectory and the subdirectory 
+		// exists, pass on the remaining path to the 
+		// _modify_object of that tree, and then mark the
+		// modified flag
+		case GET_SUCCESS:{
+			TREE *tree = NULL;
+			tmp = _get_child_tree( ptr, tree );
+			if( tmp != GET_SUCCESS || tree == NULL  ){
+				if( tmp == -EGET_NO_MEM )
+					return -EMOD_NO_MEM;
+				else
+					return -EMOD_NO_SUBDIR;
+			}
+			else{
+				tmp = tree->_modify_object( depth, hash, type );
+				if( tmp != MOD_SUCCESS )
+					return tmp;
+				else{
+					ptr->s_tree->modified = true;
+					return MOD_SUCCESS;
+				}
+			}
+		}
+	}
+
 	// BUG: All the layers between the root and the actual layer is bypassed
 	// here, and if the modified flag is any indication of actual modification
 	// that will not get updated in the intermediate layers.
 	ret = _get_immediate_parent_tree( name, ptr );
-	if( ret == -EGET_NOPARENT )
+        if( ret == -EGET_NO_PARENT )
 		return _modify_local_object( name, hash, type );
 	else if( ret == GET_SUCCESS ){
 		ret = filename( name, depth );
@@ -346,6 +449,15 @@ int TREE::modify_blob( std::string filename, std::string hash )
 	return _modify_object( filename, hash, BLOB );
 }
 
+/**
+ * @brief TREE::open_tree
+ * Opens a tree with `hash` and populates all the required data structures
+ *
+ * @param hash Hash of the target tree
+ * @return OPEN_SUCCESS on success
+ *      -EOPEN_GET_FAIL if the object with `hash` couldn't be opened
+ *      -EOPEN_NO_TREE if the object with `hash` is not a tree
+ */
 int TREE::open_tree( std::string hash )
 {
 	int ret;
@@ -361,12 +473,12 @@ int TREE::open_tree( std::string hash )
 
 	ret = get_new_object( hash );
 	if( ret != 1 )
-		return -1;
+                return -EOPEN_GET_FAIL;
 	
 	// Throw error if the hash doesnt correspond to tree object
 	ret = object_type();
 	if( ret != TREE_OBJECT )
-		return -2;
+                return -EOPEN_NO_TREE;
 	
 	// Read the entire object
 	do {
@@ -409,11 +521,21 @@ int TREE::open_tree( std::string hash )
 	old_hash = hash;
 	modified = false;
 
-	return 0;
+        return OPEN_SUCCESS;
 
 }
 
-#define WRITE_SUCCESS 0
+/**
+ * @brief TREE::write_tree
+ * Writes the tree in memory to disk i.e. create an actual object with the data
+ * structure present in the memory
+ *
+ * @param hash Reference to a variable which will be stored with the value of the
+ *              hash
+ * @return WRITE_SUCCESS on success,
+ *      -EWRITE_NULLMOD_SUBTREE if a modified subtree is NULL
+ *      -EWRITE_INV_HASH if the hash present in the data structure is corrupted
+ */
 int TREE::write_tree( std::string& hash )
 {
 	std::stringstream stream;
@@ -423,38 +545,35 @@ int TREE::write_tree( std::string& hash )
 	struct subtree *st;
 	TREE *subtree;
 
+        // Loop through the entire map and write all the objects
 	for( ; it != end; it++ ){
 		char hashnum[20];
+
+                // If the type of the subobject is TREE, try to write the subtree
+                // recursively if it was modified. Otherwise write the hash directly
 		if( TYPE(it->second->type) == TREE ){
 
-			// BUG: Check whether s_tree is NULL and remove the check
-			// for modified. modified can be replaced by the NULL check,
-			// as it is enough to say whether the tree has been actually
-			// modified. i.e. subtree is opened only modified.
-			//
-			// BUG in BUG: subtree's can be opened just for reading only,
-			// so modified flag is necessary.
-			//
 			subtree = it->second->s_tree->subtree;
 			if( it->second->s_tree->modified == true ){
 				if( subtree == NULL ){
-					return -3;
+                                        return -EWRITE_NULLMOD_SUBTREE;
 				}
 				ret = subtree->write_tree( it->second->hash );
 				if( ret != WRITE_SUCCESS ){
-					return -1;
+                                        return ret;
 				}
 			}
 		}
 		stream.write( (const char *)&it->second->type, 2 );
 		ret = hash_strtonum( it->second->hash, hashnum );
 		if( ret != SUCCESS ){
-		       return -2;
+                       return -EWRITE_INV_HASH;
 		}	       
 		stream.write( hashnum, 20 );
 		stream.write( it->first.c_str(), it->first.length()+1 );
 	}
 
+        // Actually create the object and get the hash to return it.
 	ret = create_object( stream, TREE_OBJECT );
 	hash = get_hash();
 	old_hash = hash;
@@ -473,12 +592,25 @@ enum get_errors{
 	EGET_NO_ENTRY,
 	EGET_INVNAME,
 	EGET_NO_SUBDIR,
-	EGET_NO_TREE
+        EGET_NO_TREE,
+        EGET_NO_PARENT,
+        EGET_NO_MEM
 };
 	
+/**
+ * @brief TREE::_get_local_object
+ * Gets a local object from the given tree.
+ *
+ * @param name Name of the target object
+ * @param hash Variable to hold hash of the required object
+ * @param type Type of the target object
+ * @return GET_SUCCESS on success,
+ *      -EGET_NO_OBJECT if no such object with `name` exists
+ *      -EGET_TYPE if the type of the object doesn't match
+ */
 int TREE::_get_local_object( std::string name, std::string& hash, int type )
 {
-	auto ret = contents.find( dirname );
+        auto ret = contents.find( name );
 	if( ret == contents.end())
 		return -EGET_NO_OBJECT;
 	else{
@@ -502,17 +634,6 @@ int TREE::_get_local_blob( std::string filename, std::string& hash )
 	return _get_local_object( filename, hash, BLOB );
 }
 
-int TREE::_get_local_entry( std::string dirname, struct entry& *entry )
-{
-	auto ret = contents.find( dirname );
-	if( ret == contents.end() )
-		return -ENO_ENTRY;
-	else{
-		entry = &ret->second;
-		return SUCCESS;
-	}
-}
-
 int TREE::_get_object( std::string name, std::string& hash, int type )
 {
 
@@ -524,7 +645,7 @@ int TREE::_get_object( std::string name, std::string& hash, int type )
 	TREE *parent;
 
 	int ret = _get_immediate_parent_tree( name, parent );
-	if( ret == -EGET_NOPARENT )
+        if( ret == -EGET_NO_PARENT )
 		return _get_local_object( name, hash, type );
 	else if( ret == GET_SUCCESS ){
 		ret = filename( name, depth );
