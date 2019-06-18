@@ -301,7 +301,8 @@ enum mod_errors{
     EMOD_NO_OBJECT,
     EMOD_NO_SUBDIR,
     EMOD_NO_TREE,
-    EMOD_NO_MEM
+    EMOD_NO_MEM,
+    EMOD_CORRUPTED
 };
 
 /**
@@ -316,6 +317,7 @@ enum mod_errors{
  * @return MOD_SUCCESS on successful modification,
  *      -EMOD_NO_ENTRY if the local object doesn't exist
  *      -EMOD_TYPE if the type of the local object is different from the target type
+ *      -EMOD_CORRUPTED if the data structure is corrupted
  */
 int TREE::_modify_local_object( std::string name, std::string hash, int type )
 {
@@ -334,7 +336,9 @@ int TREE::_modify_local_object( std::string name, std::string hash, int type )
 			if( tmp->s_tree->subtree != NULL ){
 				// TODO: Write to reflog
 				ret = tmp->s_tree->subtree->write_tree( t );
-				ret = tmp->s_tree->subtree->destroy_tree();
+                                if( ret != WRITE_SUCCESS )
+                                    return -EMOD_CORRUPTED;
+                                ret = tmp->s_tree->subtree->destroy_tree();
 				delete tmp->s_tree;
 				tmp->s_tree = NULL;
 			}
@@ -362,18 +366,20 @@ int TREE::_modify_local_object( std::string name, std::string hash, int type )
  *      -EMOD_TYPE if the specified type doesn't match with the object type
  *      -EMOD_NO_ENTRY if the specified object doesn't have an entry
  *      -EMOD_NO_MEM if the memory creation during modification failed
+ *      -EMOD_CORRUPTED if the data structure is corrupted
  */
 int TREE::_modify_object( std::string name, std::string hash, int type )
 {
-	TREE *ptr;
+        struct entry *ptr;
 	std::string depth;
+        std::string tmp_hash;
 
 	if( name.len() <= 0 )
 		return -EMOD_INVNAME;
 	if( hash.len() != 40 )
 		return -EMOD_INVHASH;
 
-	int ret = _get_object( name, hash, type );
+        int ret = _get_object( name, tmp_hash, type );
 	switch(ret){
 		case -EGET_NO_OBJECT:
 			return -EMOD_NO_OBJECT;
@@ -426,17 +432,6 @@ int TREE::_modify_object( std::string name, std::string hash, int type )
 			}
 		}
 	}
-
-	// BUG: All the layers between the root and the actual layer is bypassed
-	// here, and if the modified flag is any indication of actual modification
-	// that will not get updated in the intermediate layers.
-	ret = _get_immediate_parent_tree( name, ptr );
-        if( ret == -EGET_NO_PARENT )
-		return _modify_local_object( name, hash, type );
-	else if( ret == GET_SUCCESS ){
-		ret = filename( name, depth );
-		return ptr->_modify_local_object( depth, hash, type );
-	}
 }
 
 int TREE::modify_subtree( std::string treename, std::string hash )
@@ -447,6 +442,155 @@ int TREE::modify_subtree( std::string treename, std::string hash )
 int TREE::modify_blob( std::string filename, std::string hash )
 {
 	return _modify_object( filename, hash, BLOB );
+}
+
+enum rem_returns{
+    REM_SUCCESS = 0,
+    EREM_NO_ENTRY,
+    EREM_TYPE,
+    EREM_CORRUPTED,
+    EREM_FAILURE,
+    EREM_NO_OBJECT,
+    EREM_NO_SUBDIR,
+    EREM_NO_TREE,
+    EREM_INVNAME,
+    EREM_NO_MEM
+};
+
+/**
+ * @brief TREE::_remove_local_object
+ * Removes a local object with `name`
+ *
+ * @param name Name of the target object
+ * @param type Type of the object
+ * @return REM_SUCCESS on successful removal
+ *      -EREM_NO_ENTRY, if there is no such entry with `name`
+ *      -EREM_TYPE, if there is a type mismatch
+ *      -EREM_CORRUPTED, if the data structure is corrupted( modified
+ *          flag is ON, but the subtree is NULL )
+ *      -EREM_FAILURE, if the erase operation was unable to be completed.
+ */
+int TREE::_remove_local_object( std::string name, int type )
+{
+    struct entry *tmp;
+    std::string t;
+
+    int ret = _get_local_entry( name, tmp );
+    if( ret == -EGET_NO_ENTRY )
+            return -EREM_NO_ENTRY;
+    if( TYPE(tmp->type) != type )
+            return -EREM_TYPE;
+
+    if( TYPE(type) == TREE ){
+            if( tmp->s_tree != NULL ){
+                    if( tmp->s_tree->subtree != NULL ){
+                            // TODO: Write to reflog
+                            ret = tmp->s_tree->subtree->write_tree( t );
+                            if( ret != WRITE_SUCCESS )
+                                return -EREM_CORRUPTED;
+                            ret = tmp->s_tree->subtree->destroy_tree();
+
+                            // The subtree is cleared in the destructor of the struct
+                            // entry. So no need to clear that part of the memory here
+                            delete tmp->s_tree;
+                            tmp->s_tree = NULL;
+                    }
+            }
+    }
+
+    ret = contents.erase( name );
+    if( ret == 0 )
+        return EREM_FAILURE;
+
+    return REM_SUCCESS;
+}
+
+/**
+ * @brief TREE::_remove_object
+ * Removes the object with `name` with `type`
+ *
+ * @param name Name of the target object
+ * @param type Type of the target object
+ * @return REM_SUCCESS on success,
+ *      -EREM_INVNAME, if the given `name` is invalid
+ *      -EREM_NO_SUBDIR, if the path contains some invalid subdirectory
+ *      -EREM_NO_TREE, if the path contains some file which is not a directory
+ *      -EREM_TYPE, if there is a type mismatch
+ *      -EREM_NO_ENTRY. if there is no object with `name`
+ *      -EREM_NO_MEM, for memory related issues during remove
+ */
+int TREE::_remove_object( std::string name, int type )
+{
+    struct entry *ptr;
+    std::string tmp_hash;
+    int tmp;
+
+    if( name.len() <= 0 )
+        return -EREM_INVNAME;
+
+    int ret = _get_object( name, tmp_hash, type );
+    switch(ret){
+            case -EGET_NO_OBJECT:
+                    return -EREM_NO_OBJECT;
+            case -EGET_NO_SUBDIR:
+                    return -EREM_NO_SUBDIR;
+            case -EGET_NO_TREE:
+                    return -EREM_NO_TREE;
+            case -EGET_TYPE:
+                    return -EREM_TYPE;
+            case -EGET_INVNAME;
+                    return -EREM_INVNAME;
+    }
+
+    // Get the directory which is next inorder in the given path
+    ret = _get_next_dir( name, ptr, depth );
+    switch(ret){
+            case -EGET_NO_ENTRY:
+                    return -EREM_NO_SUBDIR;
+            // If the path contains no subdirectories, search for
+            // the element and modify that if it exists. Otherwise
+            // return an error.
+            case -EGET_NO_PARENT:{
+                    tmp = _get_local_entry( name, ptr );
+                    if( tmp == -EGET_NO_ENTRY )
+                            return -EREM_NO_ENTRY;
+                    else
+                            return _remove_local_object( name, type );
+            }
+            // If the path has a subdirectory and the subdirectory
+            // exists, pass on the remaining path to the
+            // _modify_object of that tree, and then mark the
+            // modified flag
+            case GET_SUCCESS:{
+                    TREE *tree = NULL;
+                    tmp = _get_child_tree( ptr, tree );
+                    if( tmp != GET_SUCCESS || tree == NULL  ){
+                            if( tmp == -EGET_NO_MEM )
+                                    return -EREM_NO_MEM;
+                            else
+                                    return -EREM_NO_SUBDIR;
+                    }
+                    else{
+                            tmp = tree->_remove_object( depth, type );
+                            if( tmp != REM_SUCCESS )
+                                    return tmp;
+                            else{
+                                    ptr->s_tree->modified = true;
+                                    return REM_SUCCESS;
+                            }
+                    }
+            }
+    }
+}
+
+int TREE::remove_blob( std::string filename )
+{
+    return _remove_object( filename, BLOB );
+}
+
+int TREE::remove_subtree( std::string dirname )
+{
+    return _remove_object( dirname, TREE );
 }
 
 /**
@@ -524,6 +668,12 @@ int TREE::open_tree( std::string hash )
         return OPEN_SUCCESS;
 
 }
+
+enum write_returns{
+    WRITE_SUCCESS = 0,
+    EWRITE_NULLMOD_SUBTREE,
+    EWRITE_INV_HASH
+};
 
 /**
  * @brief TREE::write_tree
@@ -664,3 +814,4 @@ int TREE::get_blob( std::string filename, std::string &hash )
 {
 	return _get_object( filename, hash, BLOB );
 }
+
