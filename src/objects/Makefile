@@ -18,6 +18,9 @@ ${GZSTREAM}/libgzstream.a:
 %.o: %.cpp
 	g++ ${CPPFLAGS} -c $^ -o $@
 
+objects.a : ${GZSTREAM}/libgzstream.a objects.o ${SHA1}/sha1.o
+	${AR} $@ $^
+	  
 clean:
 	@rm -f objects
 	@rm -f *.o

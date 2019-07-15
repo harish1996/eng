@@ -13,7 +13,7 @@
  * @return the lower nibble if `in` is a valid hexadecimal digit
  * 	16 if `in` is not a valid hexadecimal digit
  */
-unsigned char chartonibble( char in )
+static unsigned char chartonibble( char in )
 {
 	if( in >= '0' && in <= '9' )
 		return in - '0';
@@ -32,7 +32,7 @@ unsigned char chartonibble( char in )
  *
  * @return a valid hexadecimal digit in character. -1 in case of error
  */
-char nibbletochar( unsigned char in, char is_lower )
+static char nibbletochar( unsigned char in, char is_lower )
 {
 	in = is_lower ? ( in & 0x0F ) : (( in & 0xF0 ) >> 4) ;
        	if( in <= 9 )
@@ -60,7 +60,7 @@ enum hash_strtonum_status {
  * @return SUCCESS if success, -ERR_STR_FORMAT if the input string is not 40 characters long,
  * 	-ERR_INV_NUMBER if the string contains anything other than hex digits.
  */
-int hash_strtonum( std::string hash, unsigned char *arr )
+static int hash_strtonum( std::string hash, unsigned char *arr )
 {
 	if( hash.length() != 40 )
 		return -ERR_STR_FORMAT;
@@ -95,7 +95,7 @@ int hash_strtonum( std::string hash, unsigned char *arr )
  *
  * @return 0 on success
  */
-int hash_numtostr( std::string& hash, unsigned char *arr )
+static int hash_numtostr( std::string& hash, unsigned char *arr )
 {
 	hash.resize( 40 );
 	for( int i=0; i<20; i++ ){
