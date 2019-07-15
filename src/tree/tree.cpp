@@ -902,40 +902,14 @@ void TREE::cat()
 	auto it = contents.begin();
 	auto end = contents.end();
 
-	// Loop through the entire map and write all the objects
+	// Loop through the entire map and prints all the objects in the tree
 	for( ; it != end; it++ ){
-		// unsigned char hashnum[20];
-
-	        // If the type of the subobject is TREE, try to write the subtree
-	        // recursively if it was modified. Otherwise write the hash directly
-		// if( TYPE(it->second.type) == TREE_OBJ ){
-		// 	if( it->second.s_tree != NULL ){
-		// 		subtree = it->second.s_tree->sub_tree;
-		// 		if( it->second.s_tree->modified == true ){
-		// 			if( subtree == NULL ){
-	 //                                        return -EWRITE_NULLMOD_SUBTREE;
-		// 			}
-		// 			ret = subtree->write_tree( it->second.hash );
-		// 			if( ret != WRITE_SUCCESS ){
-	 //                                        return ret;
-		// 			}
-		// 		}
-		// 	}
-		// }
-		if( TYPE(it->second.type == TREE_OBJ) )
+		if( TYPE(it->second.type) == TREE_OBJ )
 			std::cout<<"tree ";
 		else
 			std::cout<<"blob ";
 		std::cout<< it->second.hash <<" ";
 		std::cout<< it->first<<"\n";
-
-		// stream.write( (const char *)&it->second.type, 2 );
-		// ret = hash_strtonum( it->second.hash, hashnum );
-		// if( ret != SUCCESS ){
-	 //               return -EWRITE_INV_HASH;
-		// }	       
-		// stream.write( (char *)hashnum, 20 );
-		// stream.write( it->first.c_str(), it->first.length()+1 );
 	}
 
 }

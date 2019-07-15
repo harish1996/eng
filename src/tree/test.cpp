@@ -68,15 +68,22 @@ int main()
 	// cout<< second.add_blob( "error", obj.get_hash() );
 	// cout<< first.add_subtree("first/")
 	cout<< first.add_blob( "error", obj.get_hash() );
+	cout<< obj.discard_object();
+
 	cout<< first.write_tree( hash );
 	// cout<< hash;
 	cout<< second.create_tree();
+	cout<< obj.create_blob_object("test.cpp");
 	cout<< second.add_subtree("first", hash);
+	cout<< second.add_blob("first/test", obj.get_hash() );
 	cout<< second.write_tree( hash );
 	// cout<< hash;
 	cout<<"\n";
 
 	second.cat();
+	cout<< second.get_subtree("first", hash );
+	first.destroy_tree();
+	cout<< first.open_tree(hash);
 
 	first.cat();
 	return 0;
