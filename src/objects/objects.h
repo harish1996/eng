@@ -13,6 +13,8 @@
 #define COMMIT_OBJECT 1
 #define TREE_OBJECT 2
 
+#define DEFAULT_OBJECTS_PATH ".objects/"
+
 class OBJ : public SHA1
 {
 	// Variable to store the hash of the open object

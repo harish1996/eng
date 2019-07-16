@@ -24,6 +24,18 @@ int filename( const std::string path, std::string &fname )
 	}
 }
 
+int full_dirpath( const std::string path, std::string &pathname )
+{
+	std::size_t found = path.find_last_of("/");
+	if( found == std::string::npos ){
+		return -1;
+	}
+	else{
+		pathname = path.substr(0,found+1);
+		return found;
+	}	
+}
+
 enum get_errors{
 	GET_SUCCESS = 0,
 	EGET_NO_OBJECT,
@@ -40,7 +52,8 @@ enum get_errors{
 enum write_returns{
     WRITE_SUCCESS = 0,
     EWRITE_NULLMOD_SUBTREE,
-    EWRITE_INV_HASH
+    EWRITE_INV_HASH,
+    EWRITE_UNABLE_FILE
 };
 
 enum open_errors{
@@ -170,7 +183,7 @@ int TREE::_get_child_tree( struct entry *entry, TREE* &tree )
  *	-EGET_NOPARENT if path contains a direct file/directory without any parent
  *	Other errors mentioned for `_get_child_tree`
  */
-int TREE::_get_immediate_parent_tree( std::string dirname, TREE* &parent )
+int TREE::__get_immediate_parent_tree( std::string dirname, TREE* &parent )
 {
 	std::string h,subtree,depth;
 	int ret;
@@ -190,6 +203,17 @@ int TREE::_get_immediate_parent_tree( std::string dirname, TREE* &parent )
 				return ret;
 			return ptr->_get_immediate_parent_tree( depth, parent );
 		}
+	}
+	else
+		return -EGET_NO_PARENT;
+}
+
+int TREE::_get_immediate_parent_tree( std::string dirname, TREE* &parent )
+{
+	std::string dirpath;
+	int tmp = full_dirpath( dirname, dirpath );
+	if( tmp >= 0 ){
+		return __get_immediate_parent_tree( dirpath, parent );
 	}
 	else
 		return -EGET_NO_PARENT;
@@ -753,6 +777,8 @@ int TREE::write_tree( std::string& hash )
 
         // Actually create the object and get the hash to return it.
 	ret = create_object( stream, TREE_OBJECT );
+	if( ret != SUCCESS)
+		return -EWRITE_UNABLE_FILE;
 	hash = get_hash();
 	old_hash = hash;
 
@@ -898,7 +924,6 @@ std::map<std::string,struct entry>::const_iterator TREE::cinv()
 
 void TREE::cat()
 {
-	std::stringstream stream;
 	auto it = contents.begin();
 	auto end = contents.end();
 
@@ -912,4 +937,33 @@ void TREE::cat()
 		std::cout<< it->first<<"\n";
 	}
 
+}
+
+void TREE::_rec_cat( int indent )
+{
+	auto it = contents.begin();
+	auto end = contents.end();
+
+	// Loop through the entire map and prints all the objects in the tree
+	for( ; it != end; it++ ){
+		for( int i=0; i<indent; i++ ) std::cout<<"  ";
+		if( TYPE(it->second.type) == TREE_OBJ )
+			std::cout<<"tree ";
+		else
+			std::cout<<"blob ";
+		std::cout<< it->second.hash <<" ";
+		std::cout<< it->first<<"\n";
+		if( TYPE(it->second.type) == TREE_OBJ ){
+			if( it->second.s_tree ){
+				if( it->second.s_tree->sub_tree ){
+					it->second.s_tree->sub_tree->_rec_cat( indent+1 );
+				}
+			}
+		}
+	}
+}
+
+void TREE::rec_cat()
+{
+	_rec_cat( 0 );
 }

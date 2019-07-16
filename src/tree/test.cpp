@@ -57,7 +57,7 @@ int main()
 {
 	TREE first;
 	TREE second;
-	int ret;
+	// int ret;
 	string filename = "err";
 	OBJ obj;
 	string hash;
@@ -76,16 +76,31 @@ int main()
 	cout<< obj.create_blob_object("test.cpp");
 	cout<< second.add_subtree("first", hash);
 	cout<< second.add_blob("first/test", obj.get_hash() );
+	// cout<< "\n"<<obj.get_hash()<<endl;
 	cout<< second.write_tree( hash );
 	// cout<< hash;
 	cout<<"\n";
 
-	second.cat();
-	cout<< second.get_subtree("first", hash );
+	// second.cat();
+	// cout<< second.get_subtree("first", hash );
 	first.destroy_tree();
-	cout<< first.open_tree(hash);
+	cout<< first.create_tree();
+	cout<< first.add_subtree("second",hash);
+	cout<< first.get_blob("second/first/test", hash);
+	// cout<< "\n"<< hash<<"\n";
 
-	first.cat();
+	// first.rec_cat();
+
+	cout<< obj.discard_object();
+	cout<< obj.create_blob_object("Makefile");
+	cout<< first.modify_blob("second/first/error",obj.get_hash() ) << "\n";
+
+	// first.rec_cat();
+
+	first.write_tree( hash );
+
+	cout<< hash;
+	// first.cat();
 	return 0;
 }
 

@@ -28,6 +28,8 @@ private:
         int _modify_local_object( std::string name, std::string hash, int type );
         int _remove_local_object( std::string name, int type );
         std::map<std::string,struct entry>::const_iterator _cpos( std::string path, int position );
+        int __get_immediate_parent_tree( std::string name, TREE* &parent );
+
 public:
 	TREE(): modified(false) {}
 	int open_tree( std::string hash );
@@ -54,6 +56,8 @@ public:
         std::map<std::string,struct entry>::const_iterator cend();
         std::map<std::string,struct entry>::const_iterator cinv();
 	void cat();
+	void _rec_cat( int indent );
+	void rec_cat();
 	~TREE(){
 		destroy_tree();
 	};
@@ -104,7 +108,7 @@ struct entry {
 	uint16_t type;
 	std::string hash;
 	struct subtree *s_tree;
-        entry(){}
+        entry():s_tree(0){}
         entry( uint16_t type, std::string hash ):type(type),hash(hash){}
         ~entry(){
             if( s_tree )

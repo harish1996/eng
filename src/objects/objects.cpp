@@ -1,4 +1,4 @@
-#include "objects.h"
+#include "objects.h"	
 
 #define BUF_SIZE 256
 #define FILE_NOT_OPENED -1
@@ -31,11 +31,14 @@ int OBJ::copy_file( ogzstream &ofile, std::istream &s )
 	return SUCCESS;
 }
 
-#define OBJ_EXISTS 2
+#define OBJ_EXISTS -2
+#define UNABLE_TO_CREAT_FILE -3
+
 int OBJ::create_object( std::istream &s, char type )
 {
 	std::fstream file;
 	std::stringstream t;
+	std::string object_path; 
 
 	if( type < BLOB_OBJECT && type > TREE_OBJECT )
 		return -1;
@@ -47,14 +50,17 @@ int OBJ::create_object( std::istream &s, char type )
 	s.clear();
 	s.seekg(0, s.beg);
 	hash = final();
-	file.open( hash.c_str(), std::ifstream::in );
+	object_path = DEFAULT_OBJECTS_PATH+hash;
+	file.open( object_path.c_str(), std::ifstream::in );
        	if( file.is_open() ){
 		file.close();
 		std::cout<<"Hash already exists\n";
 		return OBJ_EXISTS;
 	}
 	else{
-		ogzstream ofile( hash.c_str() );
+		ogzstream ofile( object_path.c_str() );
+		if( ! ofile.rdbuf()->is_open() )
+			return UNABLE_TO_CREAT_FILE; 
 		ofile<<type;
 		copy_file( ofile, s );
 		ofile.close();
@@ -79,6 +85,8 @@ std::string OBJ::get_hash()
 
 int OBJ::get_new_object( const std::string &hash )
 {
+	std::string obj_path;
+
 	if( this->hash == hash )
 		return 1;
 	this->hash = hash;
@@ -87,8 +95,8 @@ int OBJ::get_new_object( const std::string &hash )
 	if( ptr->is_open() ){
 		objstream.close();
 	}
-	
-	objstream.open( hash.c_str() );
+	obj_path = DEFAULT_OBJECTS_PATH+hash;
+	objstream.open( obj_path.c_str() );
 	if( ! ptr->is_open() ){
 		return -1;
 	}
@@ -105,8 +113,8 @@ int OBJ::get_new_object( const std::string &hash )
 
 int OBJ::discard_object()
 {
-	if( objstream == 0 )
-		return 1;
+	// if( objstream == 0 )
+	// 	return 1;
 	
 	gzstreambuf *ptr = objstream.rdbuf();
 	if( ptr == NULL )
