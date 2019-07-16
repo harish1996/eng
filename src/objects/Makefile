@@ -5,7 +5,7 @@ SHA1=${LIBS}/sha1
 
 CPPFLAGS=-g -I${BASE} -I${GZSTREAM} -Wall
 LDFLAGS=-L${BASE} -L${GZSTREAM} -lgzstream -lz
-AR=ar cr
+AR=ar
 
 default: objects.o
 
@@ -19,7 +19,7 @@ ${GZSTREAM}/libgzstream.a:
 	g++ ${CPPFLAGS} -c $^ -o $@
 
 objects.a : ${GZSTREAM}/libgzstream.a objects.o ${SHA1}/sha1.o
-	${AR} $@ $^
+	${AR} -rcT $@ $^
 	  
 clean:
 	@rm -f objects

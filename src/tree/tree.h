@@ -7,6 +7,69 @@
 #include <sstream>
 #include <map>
 
+enum get_errors{
+	GET_SUCCESS = 0,
+	EGET_NO_OBJECT,
+	EGET_TYPE,
+	EGET_NO_ENTRY,
+	EGET_INVNAME,
+	EGET_NO_SUBDIR,
+        EGET_NO_TREE,
+        EGET_NO_PARENT,
+        EGET_NO_MEM
+};
+
+
+enum write_returns{
+    WRITE_SUCCESS = 0,
+    EWRITE_NULLMOD_SUBTREE,
+    EWRITE_INV_HASH,
+    EWRITE_UNABLE_FILE
+};
+
+enum open_errors{
+	OPEN_SUCCESS = 0,
+	EOPEN_GET_FAIL,
+	EOPEN_NO_TREE
+};
+
+
+enum add_errors{
+	ADD_SUCCESS = 0,
+	EADD_EXIST,
+	EADD_EXISTN,
+	EADD_INVNAME,
+	EADD_NOSUBD,
+	EADD_INVHASH,
+	EADD_NO_MEM
+};
+
+
+enum mod_errors{
+    MOD_SUCCESS=0,
+    EMOD_NO_ENTRY,
+    EMOD_TYPE,
+    EMOD_INVNAME,
+    EMOD_INVHASH,
+    EMOD_NO_OBJECT,
+    EMOD_NO_SUBDIR,
+    EMOD_NO_TREE,
+    EMOD_NO_MEM,
+    EMOD_CORRUPTED
+};
+
+enum rem_returns{
+    REM_SUCCESS = 0,
+    EREM_NO_ENTRY,
+    EREM_TYPE,
+    EREM_CORRUPTED,
+    EREM_FAILURE,
+    EREM_NO_OBJECT,
+    EREM_NO_SUBDIR,
+    EREM_NO_TREE,
+    EREM_INVNAME,
+    EREM_NO_MEM
+};
 
 class TREE : protected OBJ{
 
