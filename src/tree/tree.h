@@ -41,7 +41,8 @@ enum add_errors{
 	EADD_INVNAME,
 	EADD_NOSUBD,
 	EADD_INVHASH,
-	EADD_NO_MEM
+	EADD_NO_MEM,
+	EADD_NO_PARENT
 };
 
 
@@ -81,6 +82,7 @@ private:
 
 
 	int _add_local_object( std::string name, std::string hash, int type );
+	int _add_empty_first_dir( std::string path );
 	int _get_local_object( std::string name, std::string& hash, int type );
 	int _get_local_subtree( std::string dirname, std::string& hash );
 	int _get_local_blob( std::string filename, std::string& hash );
@@ -101,17 +103,21 @@ public:
 	int _get_object( std::string name, std::string& hash, int type );
 	int get_subtree( std::string dirname, std::string& hash );
 	int get_blob( std::string filename, std::string& hash );
-	int _add_object( std::string name, std::string hash, int type );
+	int _add_object( std::string name, std::string hash, int type, bool recursive );
 	int add_subtree( std::string treename, std::string hash );
 	int add_blob( std::string filename, std::string hash );
+	int recursive_add_subtree( std::string treename, std::string hash );
+	int recursive_add_blob( std::string filename, std::string hash );
 	int _modify_object( std::string filename, std::string hash, int type );
 	int modify_subtree( std::string treename, std::string hash );
 	int modify_blob( std::string filename, std::string hash );
 	int _remove_object( std::string filename, int type );
 	int remove_subtree( std::string treename );
 	int remove_blob( std::string filename );
+	int _write_tree( std::string &hash, bool is_simulate );
 	// Creates the tree object recursively.
 	int write_tree( std::string &hash );
+	int simulate_write_tree( std::string &hash );
 	void destroy_tree();
         std::map<std::string,struct entry>::const_iterator cbegin( std::string path );
         std::map<std::string,struct entry>::const_iterator cend( std::string path );
@@ -132,11 +138,17 @@ struct subtree {
 	subtree(): modified(false) {}
 	subtree( std::string hash ){
 		sub_tree = new TREE();
-		int ret = sub_tree->open_tree( hash );
-		if( ret != 0 )
-			modified = false;
-		else
+		if( hash != "0" ){
+			int ret = sub_tree->open_tree( hash );
+			if( ret != 0 )
+				modified = false;
+			else
+				modified = true;
+		}
+		else{
+			sub_tree->create_tree();
 			modified = true;
+		}
 	}
 	~subtree(){
 		if( sub_tree != NULL ){
@@ -171,7 +183,7 @@ struct entry {
 	uint16_t type;
 	std::string hash;
 	struct subtree *s_tree;
-        entry():s_tree(0){}
+        entry():type(0),s_tree(0){}
         entry( uint16_t type, std::string hash ):type(type),hash(hash){}
         ~entry(){
             if( s_tree )

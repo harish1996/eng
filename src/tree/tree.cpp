@@ -203,6 +203,7 @@ int TREE::_add_local_object( std::string name, std::string hash, int type )
 {
         struct entry tmp;
 
+        // tmp.type = 0;
         SET_TYPE(tmp.type,type);
         tmp.hash = hash;
         tmp.s_tree = NULL;
@@ -214,6 +215,29 @@ int TREE::_add_local_object( std::string name, std::string hash, int type )
                 return -EADD_EXIST;
 
         return ADD_SUCCESS;
+}
+
+/**
+ * @func _add_empty_first_dir
+ * @brief Adds a empty dummy directory
+ *
+ * @param name Entire path
+ *
+ * @return ADD_SUCCESS on success
+ * 	-EADD_EXIST if the tree with first dirname exists
+ * 	-EADD_NO_PARENT if the path has no parent directories
+ */
+int TREE::_add_empty_first_dir( std::string name )
+{
+	int tmp;
+	std::string subtree;
+
+	tmp = first_dirname( name, subtree );
+	if( tmp >= 0 ){
+		return _add_local_object( subtree, "0", TREE_OBJ );
+	}
+	else
+		return -EADD_NO_PARENT;
 }
 
 /**
@@ -232,7 +256,7 @@ int TREE::_add_local_object( std::string name, std::string hash, int type )
  *	-EADD_INVHASH if the hash is invalid
  *	-EADD_NO_MEM if error regarding unavailability of memory.
  */
-int TREE::_add_object( std::string name, std::string hash, int type )
+int TREE::_add_object( std::string name, std::string hash, int type, bool recursive )
 {
 	if( name.length() <= 0 )
 		return -EADD_INVNAME;
@@ -251,14 +275,20 @@ int TREE::_add_object( std::string name, std::string hash, int type )
 		return -EADD_EXISTN;
         else if( ret == -EGET_INVNAME )
 		return -EADD_INVNAME;
-	else if( ret == -EGET_NO_SUBDIR || ret == -EGET_NO_ENTRY )
+	else if( !recursive && ( ret == -EGET_NO_SUBDIR || ret == -EGET_NO_ENTRY ) )
 		return -EADD_NOSUBD;
 
+add_block:
 	// Get the directory which is next inorder in the given path
 	ret = _get_next_dir( name, ptr, depth );
 	switch(ret){
                 case -EGET_NO_ENTRY:
-			return -EADD_NOSUBD;
+                	if( recursive ){
+                		tmp = _add_empty_first_dir( name );
+                		goto add_block;
+                	}
+                	else
+				return -EADD_NOSUBD;
 		// If the path contains no subdirectories, just add the
 		// element directly in this tree, if no such entry is
 		// already present
@@ -279,11 +309,17 @@ int TREE::_add_object( std::string name, std::string hash, int type )
 			if( tmp != GET_SUCCESS || tree == NULL  ){
 				if( tmp == -EGET_NO_MEM )
 					return -EADD_NO_MEM;
-				else
-					return -EADD_NOSUBD;
+				else{
+					if( recursive ){
+						tmp = _add_empty_first_dir( name );
+						goto add_block;	
+					}
+					else
+						return -EADD_NOSUBD;
+				}
 			}
 			else{
-				tmp = tree->_add_object( depth, hash, type );
+				tmp = tree->_add_object( depth, hash, type, recursive );
 				if( tmp != ADD_SUCCESS )
 					return tmp;
 				else{
@@ -298,14 +334,23 @@ int TREE::_add_object( std::string name, std::string hash, int type )
 
 int TREE::add_subtree( std::string treename, std::string hash )
 {
-	return _add_object( treename, hash, TREE_OBJ );
+	return _add_object( treename, hash, TREE_OBJ, false );
 }
 
 int TREE::add_blob( std::string filename, std::string hash )
 {
-	return _add_object( filename, hash, BLOB_OBJ );
+	return _add_object( filename, hash, BLOB_OBJ, false );
 }
 
+int TREE::recursive_add_subtree( std::string treename, std::string hash )
+{
+	return _add_object( treename, hash, TREE_OBJ, true );	
+}
+
+int TREE::recursive_add_blob( std::string filename, std::string hash )
+{
+	return _add_object( filename, hash, BLOB_OBJ, true );
+}
 
 /**
  * @brief TREE::_modify_local_object
@@ -663,19 +708,20 @@ int TREE::open_tree( std::string hash )
 
 }
 
-
 /**
- * @brief TREE::write_tree
+ * @brief TREE::_write_tree
  * Writes the tree in memory to disk i.e. create an actual object with the data
  * structure present in the memory
  *
  * @param hash Reference to a variable which will be stored with the value of the
  *              hash
+ * @param is_simulate Whether to simulate writing or not.
+ *
  * @return WRITE_SUCCESS on success,
  *      -EWRITE_NULLMOD_SUBTREE if a modified subtree is NULL
  *      -EWRITE_INV_HASH if the hash present in the data structure is corrupted
  */
-int TREE::write_tree( std::string& hash )
+int TREE::_write_tree( std::string& hash, bool is_simulate )
 {
 	std::stringstream stream;
 	auto it = contents.begin();
@@ -696,7 +742,7 @@ int TREE::write_tree( std::string& hash )
 					if( subtree == NULL ){
 	                                        return -EWRITE_NULLMOD_SUBTREE;
 					}
-					ret = subtree->write_tree( it->second.hash );
+					ret = subtree->_write_tree( it->second.hash, is_simulate );
 					if( ret != WRITE_SUCCESS ){
 	                                        return ret;
 					}
@@ -712,15 +758,33 @@ int TREE::write_tree( std::string& hash )
 		stream.write( it->first.c_str(), it->first.length()+1 );
 	}
 
-        // Actually create the object and get the hash to return it.
-	ret = create_object( stream, TREE_OBJECT );
-	if( ret != SUCCESS)
+	
+	// Dont create the object, just simulate the hashing.
+	if( is_simulate )
+		ret = hash_contents( stream, TREE_OBJECT );
+	// Actually create the object and get the hash to return it.
+	else
+		ret = create_object( stream, TREE_OBJECT );
+
+	if ( ret == -1  )
 		return -EWRITE_UNABLE_FILE;
+	
 	hash = get_hash();
 	old_hash = hash;
 
-	return WRITE_SUCCESS;
-}	
+	return WRITE_SUCCESS;	
+
+}
+
+int TREE::simulate_write_tree( std::string& hash )
+{
+	return _write_tree( hash, true );
+}
+
+int TREE::write_tree( std::string& hash )
+{
+	return _write_tree( hash, false );
+}
 
 int TREE::create_tree()
 {

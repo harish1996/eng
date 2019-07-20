@@ -1,6 +1,19 @@
 #include "add.h"
 
 
+/****************** TEMP FUNCTIONS
+ *** functions that will be used when the actual functions are not ready
+ */
+#define T_OBJECT "8f8e85330221ad054d67516331c5bfbd117aa3c9"
+
+int get_current_tree( TREE* tree )
+{
+	tree->open_tree(T_OBJECT);
+	return 0;
+}
+/****************** END ************/
+
+
 int STAGE::change_staging_file( std::string s_file )
 {
 	staging_file = s_file;
@@ -69,6 +82,64 @@ void STAGE::update( std::string filepath )
 	staged.insert(filepath);
 }
 
+
+std::string new_path( std::string dirpath, std::string filename )
+{
+	if( dirpath[ dirpath.size() - 1 ] != '/' )
+		dirpath += '/';
+	return dirpath+filename;
+}
+
+int STAGE::add_all_files( std::string filepath, TREE *tree )
+{
+	// nftw( filepath.c_str(), update_wrapper, 20, 0 );
+	DIR *iterator = opendir( filepath.c_str() );
+	struct dirent *tmp;
+
+	tmp = readdir( iterator );
+	while( tmp ){
+
+		if( tmp->d_type == DT_DIR ){
+			// std::cout<< tmp->d_name<<std::endl;
+			if( (std::string)tmp->d_name == "." || (std::string)tmp->d_name == ".." ){
+				tmp = readdir( iterator );				
+				continue;
+			}
+			add_all_files( new_path(filepath, tmp->d_name ), tree );
+		}
+		else if( tmp->d_type == DT_REG )
+			try_add( new_path( filepath, tmp->d_name ), tree );
+		else
+			return -EADDALL_NOTSUPP;
+
+		tmp = readdir( iterator );
+	}
+
+	return ADDALL_SUCCESS;
+} 
+
+int STAGE::_try_add_tree( std::string filepath, TREE *tree )
+{
+	std::string hash;
+	std::string prev_hash;
+	int ret;
+
+	ret = tree->get_subtree( filepath, prev_hash );
+	switch(ret){
+		case GET_SUCCESS:
+		case -EGET_NO_OBJECT:
+		case -EGET_NO_SUBDIR:
+		case -EGET_NO_ENTRY:
+			add_all_files( filepath, tree );
+			return TAT_SUCCESS;
+		default:
+			return -ETAT_GET_FAIL;
+	}
+
+	return ret;
+
+}
+
 void STAGE::dontupdate( std::string filepath )
 {
 
@@ -89,15 +160,19 @@ int STAGE::try_add( std::string filepath, TREE* tree )
 			case -EGET_NO_SUBDIR:
 			case -EGET_NO_ENTRY:
 				update( filepath );
-				return AFL_SUCCESS;
+				return TA_SUCCESS;
+			case -EGET_INVNAME:
+			case -EGET_TYPE:
+				_try_add_tree( filepath, tree );
+				return TA_SUCCESS;
 			default:
-				return -EAFL_GET_FAIL;
+				return -ETA_GET_FAIL;
 		}
 	}
 
 	ret = obj.hash_filecontents( filepath );
 	if( ret != 0 )
-		return -EAFL_HASH_FAIL;
+		return -ETA_HASH_FAIL;
 
 	hash = obj.get_hash();
 
@@ -106,5 +181,26 @@ int STAGE::try_add( std::string filepath, TREE* tree )
 	else
 		update( filepath );
 
-	return AFL_SUCCESS;
+	return TA_SUCCESS;
+}
+
+int DEFAULT_ADD( std::vector<std::string> filelist )
+{
+	TREE tree;
+	STAGE stager;
+	int tmp;
+	auto begin = filelist.cbegin();
+	auto end=filelist.end();
+
+	tmp = get_current_tree( &tree );
+	for( ; begin != end; begin++ ){
+		tmp = stager.try_add( *begin, &tree );
+		switch(tmp){
+			case TA_SUCCESS:
+				continue;
+		}
+	}
+
+	stager.flush();
+	return 0;
 }

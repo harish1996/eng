@@ -74,6 +74,7 @@ int OBJ::hash_contents( std::istream &s, char type )
 	std::stringstream t;
 	std::string object_path; 
 
+	// std::cout<< s;
 	if( type < BLOB_OBJECT && type > TREE_OBJECT )
 		return -1;
 
@@ -84,11 +85,10 @@ int OBJ::hash_contents( std::istream &s, char type )
 	s.clear();
 	s.seekg(0, s.beg);
 	this->hash = final();
-
 	return 0;
 }
 
-#define FILENOT_EXISTS -2
+#define FILENOT_EXISTS -4
 int OBJ::create_blob_object( const std::string filename )
 {
 	std::ifstream file( filename.c_str() );
