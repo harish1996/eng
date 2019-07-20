@@ -68,7 +68,27 @@ int OBJ::create_object( std::istream &s, char type )
 	}
 }
 
-#define FILENOT_EXISTS -2
+int OBJ::hash_contents( std::istream &s, char type )
+{
+	std::fstream file;
+	std::stringstream t;
+	std::string object_path; 
+
+	// std::cout<< s;
+	if( type < BLOB_OBJECT && type > TREE_OBJECT )
+		return -1;
+
+	t.put( type );
+	this->type = type; 
+	update( t );
+	update( s );
+	s.clear();
+	s.seekg(0, s.beg);
+	this->hash = final();
+	return 0;
+}
+
+#define FILENOT_EXISTS -4
 int OBJ::create_blob_object( const std::string filename )
 {
 	std::ifstream file( filename.c_str() );
@@ -76,6 +96,15 @@ int OBJ::create_blob_object( const std::string filename )
 		return create_object( file, BLOB_OBJECT );	
 	else
 		return FILENOT_EXISTS;
+}
+
+int OBJ::hash_filecontents( const std::string filename )
+{
+	std::ifstream file( filename.c_str() );
+	if( file.is_open() )
+		return hash_contents( file, BLOB_OBJECT );	
+	else
+		return FILENOT_EXISTS;	
 }
 
 std::string OBJ::get_hash()

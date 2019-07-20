@@ -56,6 +56,15 @@ public:
 	// @return 0 on success, -1 if invalid type, +2 if object already exists. 
 	int create_object( std::istream &s, char type );
 
+	// @func hash_contents
+	// @brief Hashes the contents of the istream
+
+	// @param s The istream which contains the contents to be hashed
+	// @param type Type of the object to be hashed
+
+	// @return 0 on success, -1 if invalid type
+	int hash_contents( std::istream &s, char type );
+
 	// @func create_blob_object 
 	// @brief Creates a blob object using a given file
 	//
@@ -63,6 +72,14 @@ public:
 	//
 	// @return 0 on success, -2 if file specified doesn't exist 
 	int create_blob_object( const std::string filename );
+
+	// @func get_hash_filecontents
+	// @brief Computes hash of the file contents 
+
+	// @param filename Filename of the file 
+
+	// @return 0 on success, -2 if file specified doesn't exist
+	int hash_filecontents( const std::string filename );
 
 	// @func get_hash
 	// @brief Gets the hash value of the open object
