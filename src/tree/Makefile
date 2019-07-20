@@ -8,7 +8,7 @@ OBJECTS=${SRC}/objects
 
 CPPFLAGS=-g -I${BASE} -I${GZSTREAM} -Wall -std=c++11
 LDFLAGS=-L${BASE} -L${GZSTREAM} -lgzstream -lz
-AR=ar cr
+AR=ar
 
 default: tree
 
@@ -16,7 +16,7 @@ tree: ${GZSTREAM}/libgzstream.a tree.o objects.o ${SHA1}/sha1.o
 	g++ ${CPPFLAGS} $^ -o $@  ${LDFLAGS} 
 
 tree.a: ${OBJECTS}/objects.a tree.o
-	${AR} $@ $^
+	${AR} -rcT $@ $^
 
 ${OBJECTS}/objects.a: 
 	make -C ${OBJECTS} objects.a

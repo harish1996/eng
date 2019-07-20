@@ -56,28 +56,47 @@ using namespace std;
 int main()
 {
 	TREE first;
+	OBJ obj;
+	string hash;
+
+	cout<< obj.create_blob_object("test.cpp")<<endl;
+	cout<< first.create_tree()<<endl;
+	cout<< first.recursive_add_blob("folder1/folder2/folder3/folder4/folder5/test",obj.get_hash())<<endl;
+	cout<< obj.discard_object();
+	cout<< obj.create_blob_object("Makefile")<<endl;
+	cout<< first.recursive_add_blob("folder1/folder2/folder4/make",obj.get_hash())<<endl;
+	first.rec_cat();
+	cout<< first.simulate_write_tree( hash )<<endl;
+	cout<< hash << endl;
+	first.rec_cat();
+	cout<<"\n";
+
+}
+int __main()
+{
+	TREE first;
 	TREE second;
 	// int ret;
 	string filename = "err";
 	OBJ obj;
 	string hash;
 
-	cout<< first.create_tree();
+	// cout<< first.create_tree();
 	// cout<< second.create_tree();
-	cout<< obj.create_blob_object("err");
+
 	// cout<< second.add_blob( "error", obj.get_hash() );
 	// cout<< first.add_subtree("first/")
-	cout<< first.add_blob( "error", obj.get_hash() );
-	cout<< obj.discard_object();
+	// cout<< first.add_blob( "error", obj.get_hash() );
+	// cout<< obj.discard_object();
 
-	cout<< first.write_tree( hash );
+	// cout<< first.write_tree( hash );
 	// cout<< hash;
-	cout<< second.create_tree();
+	// cout<< second.create_tree();
 	cout<< obj.create_blob_object("test.cpp");
-	cout<< second.add_subtree("first", hash);
-	cout<< second.add_blob("first/test", obj.get_hash() );
+	// cout<< second.add_subtree("first", hash);
+	// cout<< second.add_blob("first/test", obj.get_hash() );
 	// cout<< "\n"<<obj.get_hash()<<endl;
-	cout<< second.write_tree( hash );
+	// cout<< second.write_tree( hash );
 	// cout<< hash;
 	cout<<"\n";
 
@@ -85,11 +104,17 @@ int main()
 	// cout<< second.get_subtree("first", hash );
 	first.destroy_tree();
 	cout<< first.create_tree();
-	cout<< first.add_subtree("second",hash);
+	cout<< "\n\n";
+	cout<< first.recursive_add_blob("second/first/test", obj.get_hash() );
+
+	cout<< obj.discard_object();
+	cout<< obj.create_blob_object("err");	
+	cout<< first.recursive_add_blob("second/first/error", obj.get_hash() );
+	// cout<< first.add_subtree("second",hash);
 	cout<< first.get_blob("second/first/test", hash);
 	// cout<< "\n"<< hash<<"\n";
-
-	// first.rec_cat();
+	cout<< "\n";
+	first.rec_cat();
 
 	cout<< obj.discard_object();
 	cout<< obj.create_blob_object("Makefile");
@@ -97,8 +122,10 @@ int main()
 
 	// first.rec_cat();
 
-	first.write_tree( hash );
-
+	cout<< first.simulate_write_tree( hash );
+	// cout<< first.write_tree( hash );
+	cout<<endl;
+	first.rec_cat();
 	cout<< hash;
 	// first.cat();
 	return 0;
