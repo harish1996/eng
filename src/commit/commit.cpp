@@ -18,9 +18,14 @@ int commit::open_commit( const std::string &commit_id )
 	ss << BUF_SIZE;
 	delete buffer;
 
+	unsigned char hashnum[21];
 	getline(ss, this->_commit_type, "\0");
-	getline(ss, this->_parents[0], "\0");
-	getline(ss, this->_parents[1], "\0");
+	ss.read(hashnum, 21);
+	hash_numtostr(this->_parents[0], hashnum);
+	if(2 == this->_commit_type) {
+		ss.read(hashnum, 21);
+		hash_numtostr(this->_parents[1], hashnum);
+	}
 	getline(ss, this->_author, "\0");
 	getline(ss, this->_tree_id, "\0");
 	getline(ss, this->_commit_message, "\0");
@@ -123,6 +128,16 @@ int commit::create_commit()
 		return FAILURE;
 	}
 	std::stringstream ss;
-	ss << this->_commit_type << "\0" << this->_parents[0] << "\0" << this->_parents[1] << "\0" << this->_author << "\0" << this->_tree_id << "\0" << this->_commit_message << "\0";
+	unsigned char hashnum[21];
+	ss << this->_commit_type << "\0"; // write commit type
+	hash_strtonum(this->_parents[0], hashnum);
+	hashnum[20] = '\0';
+	ss << hashnum << "\0"; // write parent
+	if(2 == this->_commit_type) {
+		hash_strtonum(this->_parents[1], hashnum);
+		hashnum[20] = '\0';
+		ss << hashnum << "\0"; // write this for multiple parent
+	}
+	ss << this->_author << "\0" << this->_tree_id << "\0" << this->_commit_message << "\0"; // write author, tree id and commit message
 	return create_object( ss , 1 );
 }

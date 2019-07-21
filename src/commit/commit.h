@@ -2,6 +2,7 @@
 #define _COMMIT_H
 
 #include <src/objects/objects.h>
+#include <libs/helper/hash.h>
 #include <sstream>
 
 class commit: public OBJ {
