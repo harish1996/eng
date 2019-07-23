@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# Objects folder
+*.objects
+
+# Eng folder
+*.eng
