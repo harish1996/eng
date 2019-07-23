@@ -15,7 +15,7 @@ int get_current_tree( TREE* tree /*, Commit object */  )
 
 int get_current_commit( /* Commit reference goes here */ )
 {
-
+	return 0;
 }
 
 
@@ -85,19 +85,29 @@ int DEFAULT_COMMIT( std::string message )
 {
 	TREE tree;
 	std::string hash,old_hash;
-	
-	hash = read_branch( getHEAD() );
-
-	commit cobj(hash);
-	old_hash = hash;
+	std::string branch;
+	int ret,tmp;
 	commit new_cobj;
 
+	branch = getHEAD();
+	if( ! branch.empty() ){
+		hash = read_branch( branch );	
+		commit cobj(hash);
+		if( cobj.is_opened() == false ){
+			return COMMIT_FAILURE;
+		}
+		old_hash = hash;
+		ret = cobj.get_tree( hash );
+		tree.open_tree( hash );
+	}
+	else{
+		old_hash = "0000000000000000000000000000000000000000";
+		branch = "master";
+	}
+	
 	// int tmp = get_current_commit( /* Commit obj */ );
-	// tmp = get_current_tree( &tree );
-	int ret = cobj.get_tree( hash );
-	tree.open_tree( hash );
-
-	tree.rec_cat();
+	// tmp = get_current_tree( &tree );	
+	// tree.rec_cat();
 	tmp = add_staged_files( &tree, hash );
 	switch(tmp){
 		case ASF_SUCCESS:
@@ -126,7 +136,9 @@ int DEFAULT_COMMIT( std::string message )
 	new_cobj.write_author( hash );
 	new_cobj.write_message( message );
 	new_cobj.create_commit( hash );
-	ret = writeHEAD(hash);
+	std::cout<<hash;
+	ret = writeHEAD(branch);
+	ret = write_branch(hash,branch);
 
 	// tree.rec_cat();
 

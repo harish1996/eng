@@ -8,9 +8,14 @@
 class commit: public OBJ {
 	std::string _parents[2], _tree_id, _author, _commit_message;
 	int _commit_type = -1;
+	bool is_open;
 public:
 	commit( const std::string &commit_id ) {
-		open_commit( commit_id );
+		int ret = open_commit( commit_id );
+		if(ret == -1)
+			is_open=false;
+		else
+			is_open=true;
 	}
 	commit() {
 	}
@@ -27,6 +32,7 @@ public:
 	int write_message( const std::string &commit_message );
 	int create_commit( std::string &hash );
 
+	bool is_opened(){ return is_open; }
 	void cat();
 };
 

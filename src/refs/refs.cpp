@@ -103,7 +103,7 @@ int writeHEAD(std::string cur_branch){
 	if(fp == NULL)
 		return -1;
 	else{
-		fwrite(cur_branch.c_str(),100,1,fp);
+		fwrite(cur_branch.c_str(),cur_branch.length(),1,fp);
 	}
 	fclose(fp);
 	return 0;

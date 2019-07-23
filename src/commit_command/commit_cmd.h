@@ -1,7 +1,9 @@
-#ifndef _COMMIT_H
-#define _COMMIT_H
+#ifndef _COMMIT_CMD_H
+#define _COMMIT_CMD_H
 
 #include "../add_command/add.h"
+#include "../refs/refs.h"
+#include "../commit/commit.h"
 
 enum add_staged_files_returns{
 	ASF_SUCCESS = 0,
