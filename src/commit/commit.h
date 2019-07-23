@@ -13,11 +13,7 @@ class commit: public OBJ {
 	bool is_open;
 public:
 	commit( const std::string &commit_id ) {
-		int ret = open_commit( commit_id );
-		if(ret == -1)
-			is_open=false;
-		else
-			is_open=true;
+		this->open_commit( commit_id );
 	}
 	commit() {
 	}
@@ -35,7 +31,7 @@ public:
 	int write_message( const std::string &commit_message );
 	int create_commit( std::string &hash );
 
-	bool is_opened(){ return is_open; }
+	bool is_opened(){ return this->is_open; }
 	void cat();
 };
 

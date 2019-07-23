@@ -53,7 +53,6 @@ int get_tree( TREE& tree, std::string& commit_hash )
 	commit com;
 
 	ret = com.open_commit(commit_hash);
-	// com.cat();
 	if( com.is_opened() == false ){
 		return -EGT_COMMIT_FAIL;
 	}

@@ -1,5 +1,5 @@
 BASE=../
-LIBS=${BASE}/libs
+LIBS=${BASE}libs
 GZSTREAM=${LIBS}/gzstream
 SHA1=${LIBS}/sha1
 SRC=.
@@ -10,14 +10,14 @@ INIT=${SRC}/init
 CHECKOUT=${SRC}/checkout
 COMMIT=${SRC}/commit
 COMMIT_CMD=${SRC}/commit_command
-PUSH_PULL=${SRC}/push_pull 
-REDIRECT=${SRC}/redirect 
+PUSH_PULL=${SRC}/push_pull
+REDIRECT=${SRC}/redirect
 REFS=${SRC}/refs
 MISC=${SRC}/misc
 # TREE=${SRC}/tree
 
-CPPFLAGS=-g -I${BASE} -I${GZSTREAM} -std=c++11
-LDFLAGS=-L${BASE} -L${GZSTREAM} -lgzstream -lz
+CPPFLAGS=-g -I ${BASE} -I ${GZSTREAM} -std=c++11
+LDFLAGS=-L ${BASE} -L ${GZSTREAM} -lgzstream -lz
 AR=ar
 
 master_deps = ${INIT}/init.o ${COMMIT_CMD}/commit_cmd.o ${ADD_CMD}/add.o ${TREE}/tree.o ${OBJECTS}/objects.o ${COMMIT}/commit.o
