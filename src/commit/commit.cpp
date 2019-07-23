@@ -24,9 +24,11 @@ int commit::open_commit( const std::string &commit_id )
 	char hashnum[21];
 	ss >> this->_commit_type;
 	ss.ignore(1);
-	ss.read(hashnum, 20);
-	hash_numtostr(this->_parents[0], (unsigned char *) hashnum);
-	if(2 == this->_commit_type) {
+	if(0 < this->_commit_type) {
+		ss.read(hashnum, 20);
+		hash_numtostr(this->_parents[0], (unsigned char *) hashnum);
+	}
+	if(1 < this->_commit_type) {
 		ss.read(hashnum, 20);
 		hash_numtostr(this->_parents[1], (unsigned char *) hashnum);
 	}
@@ -34,7 +36,6 @@ int commit::open_commit( const std::string &commit_id )
 	getline(ss, this->_tree_id);
 	getline(ss, this->_commit_message);
 	ss.read( (char *)&this->_timestamp,sizeof(time_t));
-	// getline(ss, this->_timestamp);
 	this->is_open = true;
 	return SUCCESS;
 }
@@ -95,9 +96,12 @@ int commit::get_timestamp( std::string &timestamp )
 
 int commit::write_parents( int num, const std::string *parents )
 {
-	if(num < 1 || num > 2)
+	if(num < 0 || num > 2)
 		return FAILURE;
-	if(1 == num) {
+	if(0 == num) {
+		this->_commit_type = 0;
+	}
+	else if(1 == num) {
 		this->_commit_type = 1;
 		this->_parents[0] = std::string( parents[0] );
 	}
@@ -135,7 +139,7 @@ int commit::write_message( const std::string &commit_message )
 
 int commit::create_commit( std::string &hash )
 {
-	if(-1 == this->_commit_type || this->_parents[0].empty() || this->_author.empty() || this->_tree_id.empty() || this->_commit_message.empty()) {
+	if(-1 == this->_commit_type || (0 != this->_commit_type && this->_parents[0].empty()) || this->_author.empty() || this->_tree_id.empty() || this->_commit_message.empty()) {
 		std::cout << "some parameters not set\n";
 		return FAILURE;
 	}
@@ -143,10 +147,12 @@ int commit::create_commit( std::string &hash )
 	unsigned char hashnum[21];
 	this->_timestamp = time( NULL );
 	ss << this->_commit_type << " "; // write commit type
-	hash_strtonum(this->_parents[0], hashnum);
-	hashnum[20] = '\0';
-	ss << hashnum; // write parent
-	if(2 == this->_commit_type) {
+	if(0 < this->_commit_type) {
+		hash_strtonum(this->_parents[0], hashnum);
+		hashnum[20] = '\0';
+		ss << hashnum; // write parent
+	}
+	if(1 < this->_commit_type) {
 		hash_strtonum(this->_parents[1], hashnum);
 		hashnum[20] = '\0';
 		ss << hashnum; // write this for multiple parent
@@ -163,15 +169,14 @@ int commit::create_commit( std::string &hash )
 
 void commit::cat()
 {
-	if(-1 == this->_commit_type || this->_parents[0].empty() || this->_author.empty() || this->_tree_id.empty() || this->_commit_message.empty()) {
-		std::cout << "some parameters not set\n\n";
-		// return;
+	if(-1 == this->_commit_type || (0 != this->_commit_type && this->_parents[0].empty()) || this->_author.empty() || this->_tree_id.empty() || this->_commit_message.empty()) {
+		std::cout << "some parameters not set\n";
+		return;
 	}
 	std::cout << "Commit Type : " << this->_commit_type << "\n";
 	std::cout << "Parent(s) : " << this->_parents[0] << " " << this->_parents[1] << "\n";
 	std::cout << "Author : " << this->_author << "\n";
-	std::cout << "Time : " << ctime(&this->_timestamp) << "\n";
+	std::cout << "Time : " << ctime(&this->_timestamp);
 	std::cout << "Tree Id : " << this->_tree_id << "\n";
-	std::cout << "Commit Message : " << this->_commit_message << "\n";
-
+	std::cout << "Commit Message : " << this->_commit_message << "\n\n";
 }

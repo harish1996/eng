@@ -32,7 +32,6 @@ int get_current_commit( commit& com )
 			hash = read_branch( branch );		
 		}
 		ret = com.open_commit(hash);
-		com.cat();
 		if( com.is_opened() == false ){
 			return -EGCC_COMMIT_FAIL;
 		}
@@ -48,7 +47,6 @@ int get_tree( TREE& tree, std::string& commit_hash )
 	commit com;
 
 	ret = com.open_commit(commit_hash);
-	// com.cat();
 	if( com.is_opened() == false ){
 		return -EGT_COMMIT_FAIL;
 	}
