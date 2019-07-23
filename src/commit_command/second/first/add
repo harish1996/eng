@@ -1,0 +1,27 @@
+#include "add.h"
+
+
+int add_file_to_list( std::string filepath, TREE* tree )
+{
+	std::string hash;
+	std::string prev_hash;
+	OBJ obj;
+	int ret;
+
+	ret = tree->get_blob( filepath, prev_hash );
+	if( ret != GET_SUCCESS )
+		return -EAFL_GET_FAIL;
+
+	ret = obj.hash_filecontents( filepath );
+	if( ret != 0 )
+		return -EAFL_HASH_FAIL;
+
+	hash = obj.get_hash();
+
+	if( hash == prev_hash )
+		std::cout<<"Not updated\n"+filepath;
+	else
+		std::cout<<"Updated\n"+filepath;
+
+	return 0;
+}hiii neww file

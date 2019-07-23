@@ -1,0 +1,251 @@
+In file included from tree.cpp:1:0:
+tree.h: In destructor ‘entry::~entry()’:
+tree.h:76:24: warning: possible problem detected in invocation of delete operator: [-Wdelete-incomplete]
+                 delete s_tree;
+                        ^
+tree.h:76:24: warning: invalid use of incomplete type ‘struct subtree’
+tree.h:71:9: note: forward declaration of ‘struct subtree’
+  struct subtree *s_tree;
+         ^
+tree.h:76:24: note: neither the destructor nor the class-specific operator delete will be called, even if they are declared when the class is defined
+                 delete s_tree;
+                        ^
+tree.cpp: At global scope:
+tree.cpp:36:62: error: cannot declare pointer to ‘struct entry&’
+ int TREE::_get_local_entry( std::string name, struct entry& *entry )
+                                                              ^
+tree.cpp:36:5: error: prototype for ‘int TREE::_get_local_entry(std::__cxx11::string, entry*)’ does not match any in class ‘TREE’
+ int TREE::_get_local_entry( std::string name, struct entry& *entry )
+     ^
+In file included from tree.cpp:1:0:
+tree.h:22:6: error: candidate is: int TREE::_get_local_entry(std::__cxx11::string, entry*&)
+  int _get_local_entry( std::string dirname, struct entry* &entry ); 
+      ^
+tree.cpp:59:53: error: cannot declare pointer to ‘class TREE&’
+ int TREE::_get_child_tree( std::string name, TREE& *tree )
+                                                     ^
+tree.cpp:59:5: error: prototype for ‘int TREE::_get_child_tree(std::__cxx11::string, TREE*)’ does not match any in class ‘TREE’
+ int TREE::_get_child_tree( std::string name, TREE& *tree )
+     ^
+In file included from tree.cpp:1:0:
+tree.h:23:13: error: candidate is: int TREE::_get_child_tree(std::__cxx11::string, TREE*&)
+         int _get_child_tree( std::string dirname, TREE* &tree );
+             ^
+tree.cpp:81:5: error: prototype for ‘int TREE::_get_child_tree(entry*, TREE*&)’ does not match any in class ‘TREE’
+ int TREE::_get_child_tree( struct entry *entry, TREE* &tree )
+     ^
+In file included from tree.cpp:1:0:
+tree.h:23:13: error: candidate is: int TREE::_get_child_tree(std::__cxx11::string, TREE*&)
+         int _get_child_tree( std::string dirname, TREE* &tree );
+             ^
+tree.cpp:111:64: error: cannot declare pointer to ‘class TREE&’
+ int TREE::_get_immediate_parent_tree( std::string name, TREE& *parent )
+                                                                ^
+tree.cpp:111:5: error: prototype for ‘int TREE::_get_immediate_parent_tree(std::__cxx11::string, TREE*)’ does not match any in class ‘TREE’
+ int TREE::_get_immediate_parent_tree( std::string name, TREE& *parent )
+     ^
+In file included from tree.cpp:1:0:
+tree.h:28:6: error: candidate is: int TREE::_get_immediate_parent_tree(std::__cxx11::string, TREE*&)
+  int _get_immediate_parent_tree( std::string name, TREE* &parent );
+      ^
+tree.cpp:149:86: error: no ‘int TREE::_get_next_dir(std::__cxx11::string, entry*&, std::__cxx11::string&)’ member function declared in class ‘TREE’
+ int TREE::_get_next_dir( std::string name, struct entry* &parent, std::string &depth )
+                                                                                      ^
+tree.cpp:169:1: error: new types may not be defined in a return type
+ enum add_errors{
+ ^
+tree.cpp:169:1: note: (perhaps a semicolon is missing after the definition of ‘add_errors’)
+tree.cpp:189:75: error: two or more data types in declaration of ‘_add_local_object’
+ int TREE::_add_local_object( std::string name, std::string hash, int type )
+                                                                           ^
+tree.cpp:222:69: error: no ‘int TREE::_add_object(std::__cxx11::string, std::__cxx11::string, int)’ member function declared in class ‘TREE’
+ int TREE::_add_object( std::string name, std::string hash, int type )
+                                                                     ^
+tree.cpp: In member function ‘int TREE::add_subtree(std::__cxx11::string, std::__cxx11::string)’:
+tree.cpp:287:47: error: ‘_add_object’ was not declared in this scope
+  return _add_object( treename, hash, TREE_OBJ );
+                                               ^
+tree.cpp: In member function ‘int TREE::add_blob(std::__cxx11::string, std::__cxx11::string)’:
+tree.cpp:292:47: error: ‘_add_object’ was not declared in this scope
+  return _add_object( filename, hash, BLOB_OBJ );
+                                               ^
+tree.cpp: At global scope:
+tree.cpp:322:78: error: no ‘int TREE::_modify_local_object(std::__cxx11::string, std::__cxx11::string, int)’ member function declared in class ‘TREE’
+ int TREE::_modify_local_object( std::string name, std::string hash, int type )
+                                                                              ^
+tree.cpp:371:72: error: no ‘int TREE::_modify_object(std::__cxx11::string, std::__cxx11::string, int)’ member function declared in class ‘TREE’
+ int TREE::_modify_object( std::string name, std::string hash, int type )
+                                                                        ^
+tree.cpp: In member function ‘int TREE::modify_subtree(std::__cxx11::string, std::__cxx11::string)’:
+tree.cpp:439:50: error: ‘_modify_object’ was not declared in this scope
+  return _modify_object( treename, hash, TREE_OBJ );
+                                                  ^
+tree.cpp: In member function ‘int TREE::modify_blob(std::__cxx11::string, std::__cxx11::string)’:
+tree.cpp:444:50: error: ‘_modify_object’ was not declared in this scope
+  return _modify_object( filename, hash, BLOB_OBJ );
+                                                  ^
+tree.cpp: At global scope:
+tree.cpp:473:60: error: no ‘int TREE::_remove_local_object(std::__cxx11::string, int)’ member function declared in class ‘TREE’
+ int TREE::_remove_local_object( std::string name, int type )
+                                                            ^
+tree.cpp:522:54: error: no ‘int TREE::_remove_object(std::__cxx11::string, int)’ member function declared in class ‘TREE’
+ int TREE::_remove_object( std::string name, int type )
+                                                      ^
+tree.cpp: In member function ‘int TREE::remove_blob(std::__cxx11::string)’:
+tree.cpp:588:47: error: ‘_remove_object’ was not declared in this scope
+     return _remove_object( filename, BLOB_OBJ );
+                                               ^
+tree.cpp: In member function ‘int TREE::remove_subtree(std::__cxx11::string)’:
+tree.cpp:593:46: error: ‘_remove_object’ was not declared in this scope
+     return _remove_object( dirname, TREE_OBJ );
+                                              ^
+tree.cpp: In member function ‘int TREE::open_tree(std::__cxx11::string)’:
+tree.cpp:613:14: error: declaration of ‘char hash [20]’ shadows a parameter
+  char hash[20];
+              ^
+tree.cpp:620:25: error: ‘EOPEN_GET_FAIL’ was not declared in this scope
+                 return -EOPEN_GET_FAIL;
+                         ^
+tree.cpp:625:25: error: ‘EOPEN_NO_TREE’ was not declared in this scope
+                 return -EOPEN_NO_TREE;
+                         ^
+tree.cpp:638:29: error: no matching function for call to ‘std::__cxx11::basic_stringstream<char>::read(uint16_t*, int)’
+   stream.read( &tmp.type, 2 );
+                             ^
+In file included from /usr/include/c++/5/iostream:40:0,
+                 from ../../libs/gzstream/gzstream.h:33,
+                 from ../../src/objects/objects.h:4,
+                 from tree.h:4,
+                 from tree.cpp:1:
+/usr/include/c++/5/istream:486:7: note: candidate: std::basic_istream<_CharT, _Traits>& std::basic_istream<_CharT, _Traits>::read(std::basic_istream<_CharT, _Traits>::char_type*, std::streamsize) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_istream<_CharT, _Traits>::char_type = char; std::streamsize = long int]
+       read(char_type* __s, streamsize __n);
+       ^
+/usr/include/c++/5/istream:486:7: note:   no known conversion for argument 1 from ‘uint16_t* {aka short unsigned int*}’ to ‘std::basic_istream<char>::char_type* {aka char*}’
+tree.cpp:648:40: error: ‘hash_numtostr’ was not declared in this scope
+   ret = hash_numtostr( &tmp.hash, hash );
+                                        ^
+tree.cpp:651:33: error: no matching function for call to ‘std::__cxx11::basic_stringstream<char>::getline(char (*)[256], int, int)’
+    stream.getline( &buf, 256, 0 );
+                                 ^
+In file included from /usr/include/c++/5/iostream:40:0,
+                 from ../../libs/gzstream/gzstream.h:33,
+                 from ../../src/objects/objects.h:4,
+                 from tree.h:4,
+                 from tree.cpp:1:
+/usr/include/c++/5/istream:647:5: note: candidate: std::basic_istream<_CharT, _Traits>& std::basic_istream<_CharT, _Traits>::getline(std::basic_istream<_CharT, _Traits>::char_type*, std::streamsize, std::basic_istream<_CharT, _Traits>::char_type) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_istream<_CharT, _Traits>::char_type = char; std::streamsize = long int]
+     basic_istream<char>::
+     ^
+/usr/include/c++/5/istream:647:5: note:   no known conversion for argument 1 from ‘char (*)[256]’ to ‘std::basic_istream<char>::char_type* {aka char*}’
+/usr/include/c++/5/istream:427:7: note: candidate: std::basic_istream<_CharT, _Traits>::__istream_type& std::basic_istream<_CharT, _Traits>::getline(std::basic_istream<_CharT, _Traits>::char_type*, std::streamsize) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_istream<_CharT, _Traits>::__istream_type = std::basic_istream<char>; std::basic_istream<_CharT, _Traits>::char_type = char; std::streamsize = long int]
+       getline(char_type* __s, streamsize __n)
+       ^
+/usr/include/c++/5/istream:427:7: note:   candidate expects 2 arguments, 3 provided
+tree.cpp:668:16: error: ‘OPEN_SUCCESS’ was not declared in this scope
+         return OPEN_SUCCESS;
+                ^
+tree.cpp: In member function ‘int TREE::write_tree(std::__cxx11::string&)’:
+tree.cpp:692:2: warning: ‘auto’ changes meaning in C++11; please remove it [-Wc++0x-compat]
+  auto it = contents.cbegin();
+  ^
+tree.cpp:692:7: error: ‘it’ does not name a type
+  auto it = contents.cbegin();
+       ^
+tree.cpp:693:2: warning: ‘auto’ changes meaning in C++11; please remove it [-Wc++0x-compat]
+  auto end = contents.cend();
+  ^
+tree.cpp:693:7: error: ‘end’ does not name a type
+  auto end = contents.cend();
+       ^
+tree.cpp:699:9: error: ‘it’ was not declared in this scope
+  for( ; it != end; it++ ){
+         ^
+tree.cpp:699:15: error: ‘end’ was not declared in this scope
+  for( ; it != end; it++ ){
+               ^
+tree.cpp:718:50: error: ‘hash_strtonum’ was not declared in this scope
+   ret = hash_strtonum( it->second->hash, hashnum );
+                                                  ^
+tree.cpp:719:14: error: ‘SUCCESS’ was not declared in this scope
+   if( ret != SUCCESS ){
+              ^
+tree.cpp:695:18: warning: unused variable ‘st’ [-Wunused-variable]
+  struct subtree *st;
+                  ^
+tree.cpp: In member function ‘int TREE::create_tree()’:
+tree.cpp:737:1: warning: no return statement in function returning non-void [-Wreturn-type]
+ }
+ ^
+tree.cpp: In member function ‘int TREE::_get_local_object(std::__cxx11::string, std::__cxx11::string&, int)’:
+tree.cpp:763:9: warning: ‘auto’ changes meaning in C++11; please remove it [-Wc++0x-compat]
+         auto ret = contents.find( name );
+         ^
+tree.cpp:763:14: error: ‘ret’ does not name a type
+         auto ret = contents.find( name );
+              ^
+tree.cpp:764:6: error: ‘ret’ was not declared in this scope
+  if( ret == contents.end())
+      ^
+tree.cpp: At global scope:
+tree.cpp:823:6: error: prototype for ‘void TREE::destroy_tree()’ does not match any in class ‘TREE’
+ void TREE::destroy_tree()
+      ^
+In file included from tree.cpp:1:0:
+tree.h:40:6: error: candidate is: int TREE::destroy_tree()
+  int destroy_tree();
+      ^
+tree.cpp: In function ‘std::map<std::__cxx11::basic_string<char>, entry>::const_iterator _cpos(std::__cxx11::string, int)’:
+tree.cpp:835:44: error: ‘_get_next_dir’ was not declared in this scope
+  int ret = _get_next_dir( path, ptr, depth );
+                                            ^
+tree.cpp:839:37: error: ‘_get_child_tree’ was not declared in this scope
+    ret = _get_child_tree( ptr, tree );
+                                     ^
+tree.cpp:841:12: error: could not convert ‘0’ from ‘int’ to ‘std::map<std::__cxx11::basic_string<char>, entry>::const_iterator {aka std::_Rb_tree_const_iterator<std::pair<const std::__cxx11::basic_string<char>, entry> >}’
+     return 0;
+            ^
+tree.cpp:843:18: error: ‘class TREE’ has no member named ‘_cpos’
+     return tree->_cpos(depth,position);
+                  ^
+tree.cpp:845:10: error: redeclaration of ‘TREE* tree’
+    TREE *tree;
+          ^
+tree.cpp:838:10: note: ‘TREE* tree’ previously declared here
+    TREE *tree;
+          ^
+tree.cpp:848:12: error: could not convert ‘0’ from ‘int’ to ‘std::map<std::__cxx11::basic_string<char>, entry>::const_iterator {aka std::_Rb_tree_const_iterator<std::pair<const std::__cxx11::basic_string<char>, entry> >}’
+     return 0;
+            ^
+tree.cpp:850:45: error: no matching function for call to ‘TREE::cbegin()’
+     return position == BEGIN ? tree->cbegin() : tree->cend();
+                                             ^
+In file included from tree.cpp:1:0:
+tree.h:41:60: note: candidate: std::map<std::__cxx11::basic_string<char>, entry>::const_iterator TREE::cbegin(std::__cxx11::string)
+         std::map<std::string,struct entry>::const_iterator cbegin( std::string path );
+                                                            ^
+tree.h:41:60: note:   candidate expects 1 argument, 0 provided
+tree.cpp:850:60: error: no matching function for call to ‘TREE::cend()’
+     return position == BEGIN ? tree->cbegin() : tree->cend();
+                                                            ^
+In file included from tree.cpp:1:0:
+tree.h:42:60: note: candidate: std::map<std::__cxx11::basic_string<char>, entry>::const_iterator TREE::cend(std::__cxx11::string)
+         std::map<std::string,struct entry>::const_iterator cend( std::string path );
+                                                            ^
+tree.h:42:60: note:   candidate expects 1 argument, 0 provided
+tree.cpp:852:11: error: could not convert ‘0’ from ‘int’ to ‘std::map<std::__cxx11::basic_string<char>, entry>::const_iterator {aka std::_Rb_tree_const_iterator<std::pair<const std::__cxx11::basic_string<char>, entry> >}’
+    return 0;
+           ^
+tree.cpp: In function ‘std::map<std::__cxx11::basic_string<char>, entry>::const_iterator cbegin()’:
+tree.cpp:863:9: error: ‘contents’ was not declared in this scope
+  return contents.cbegin();
+         ^
+tree.cpp: In function ‘std::map<std::__cxx11::basic_string<char>, entry>::const_iterator cend()’:
+tree.cpp:873:9: error: ‘contents’ was not declared in this scope
+  return contents.cend();
+         ^
+tree.cpp: In member function ‘int TREE::_get_local_object(std::__cxx11::string, std::__cxx11::string&, int)’:
+tree.cpp:775:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+make: *** [tree.o] Error 1
+afjkdfhsdj
+fksgf<dsgf
