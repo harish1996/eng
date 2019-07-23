@@ -22,14 +22,14 @@ int get_current_commit( /* Commit reference goes here */ )
 /****************** END ************/
 
 
-int add_staged_files( TREE *tree )
+int add_staged_files( TREE *tree, std::string& hash )
 {
 	STAGE stager;
 	OBJ obj;
 	auto begin = stager.cbegin();
 	auto end = stager.cend();
 	int tmp;
-	std::string name, hash;
+	std::string name;
 
 	if ( begin == end )
 		return -EASF_NOTHING;
@@ -84,13 +84,21 @@ int add_staged_files( TREE *tree )
 int DEFAULT_COMMIT( std::string message )
 {
 	TREE tree;
+	std::string hash,old_hash;
+	
+	hash = read_branch( getHEAD() );
 
-	/* Old commit object goes here */
-	/* New commit object goes here */
-	int tmp = get_current_commit( /* Commit obj */ );
-	tmp = get_current_tree( &tree );
+	commit cobj(hash);
+	old_hash = hash;
+	commit new_cobj;
+
+	// int tmp = get_current_commit( /* Commit obj */ );
+	// tmp = get_current_tree( &tree );
+	int ret = cobj.get_tree( hash );
+	tree.open_tree( hash );
+
 	tree.rec_cat();
-	tmp = add_staged_files( &tree );
+	tmp = add_staged_files( &tree, hash );
 	switch(tmp){
 		case ASF_SUCCESS:
 			break;
@@ -110,7 +118,17 @@ int DEFAULT_COMMIT( std::string message )
 	/* Update new commit object with old commit as parent and the new tree hash */
 	/* Write the message */
 	/* Create the object */
-	tree.rec_cat();
+
+	new_cobj.write_parents( 1, &old_hash );
+	// hash = tree.get_hash();
+	new_cobj.write_tree( hash );
+	hash = "GOD";
+	new_cobj.write_author( hash );
+	new_cobj.write_message( message );
+	new_cobj.create_commit( hash );
+	ret = writeHEAD(hash);
+
+	// tree.rec_cat();
 
 	return COMMIT_SUCCESS;
 }

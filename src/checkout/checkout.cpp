@@ -242,3 +242,17 @@ int _restore_tree( TREE *new_tree, TREE *old_tree, std::string prefix )
 
 	return UPD_SUCCESS;
 }
+
+int DEFAULT_CHECKOUT( std::string str )
+{
+	std::string hash,branch;
+
+	if( str.length() == 40 )
+		hash = str;
+	else{
+		branch = str;
+		hash = read_branch( branch );
+	}
+
+	return _restore_tree( hash, "" );
+}
