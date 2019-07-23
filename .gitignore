@@ -33,3 +33,6 @@
 
 # Objects folder
 *.objects
+
+# Eng folder
+*.eng
