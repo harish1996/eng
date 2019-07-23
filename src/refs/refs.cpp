@@ -55,6 +55,7 @@ int write_branch(std::string hash, std::string branch_name){
 		** string to char pointer conversion
 		*/
 		fwrite(hash.c_str(),40,1,fp);
+		fwrite("\n",1,1,fp);
 	}
 	fclose(fp);
 	return 0;
@@ -66,7 +67,7 @@ int write_branch(std::string hash, std::string branch_name){
 *** return branch name(head points to branch) : success 
 *** return empty string : failure
 */
-std::string getHEAD(){
+int getHEAD( std::string& head){
 
 	char *buffer,ch;
 	FILE *fp;
@@ -75,8 +76,8 @@ std::string getHEAD(){
 	buffer = (char*)malloc(100);
 	fp = fopen(".eng/HEAD","r");
 	if(fp == NULL){
-		str1.clear();
-		return str1;
+		head.clear();
+		return -EGETHEAD_NOFILE;
 	}
 	else{
 		while((ch=fgetc(fp)) != (EOF) && ch !='\n' && ch !='\0'){
@@ -86,7 +87,8 @@ std::string getHEAD(){
 	}
 	fclose(fp);
 	buffer[count] = 0;
-	return((std::string)buffer);
+	head = buffer;
+	return GETHEAD_SUCCESS;
 }
 
 /*
@@ -103,6 +105,7 @@ int writeHEAD(std::string cur_branch){
 	if(fp == NULL)
 		return -1;
 	else{
+		cur_branch += "\n";
 		fwrite(cur_branch.c_str(),cur_branch.length(),1,fp);
 	}
 	fclose(fp);

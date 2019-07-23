@@ -3,6 +3,7 @@
 
 #include "../tree/tree.h"
 #include "../objects/objects.h"
+#include "../misc/misc.h"
 #include <iostream>
 #include <string>
 #include <set>
@@ -34,6 +35,12 @@ enum add_all_returns{
 enum try_remove_returns{
 	TR_SUCCESS = 0,
 	ETR_EXIST
+};
+
+enum default_add_returns{
+	DEFAULT_ADD_SUCCESS=0,
+	EDEFAULT_ADD_CURRENT_TREE,
+	EDEFAULT_TRY_ADD_FAIL
 };
 
 class STAGE{
@@ -107,7 +114,7 @@ public:
 	int try_remove( std::string filepath );
 
 	~STAGE(){
-		flush();
+		// flush();
 		staged.clear();
 		staging_file.clear();
 	}

@@ -7,7 +7,7 @@ int get_current_tree( TREE& tree )
 	commit cobj;
 
 	ret = get_current_commit( cobj );
-	if( ret == -EGCC_COMMIT_FAIL )
+	if( ret == -EGCC_COMMIT_FAIL || ret == -EGCC_GETHEAD_FAIL )
 		return -EGCT_COMMIT_FAIL;
 	else if( ret == -EGCC_EMPTY_BRANCH )
 		return GCT_SUCCESS;
@@ -22,7 +22,10 @@ int get_current_commit( commit& com )
 	std::string branch,hash;
 	int ret;
 
-	branch = getHEAD();
+	ret = getHEAD( branch );
+	if( ret != GETHEAD_SUCCESS ){
+		return -EGCC_GETHEAD_FAIL;
+	}
 	if( ! branch.empty() ){
 
 		if( branch.size() == 40 ){
@@ -32,7 +35,9 @@ int get_current_commit( commit& com )
 			hash = read_branch( branch );		
 		}
 		ret = com.open_commit(hash);
-		com.cat();
+		if( ret != 0 )
+			return -EGCC_COMMIT_FAIL;
+		// com.cat();
 		if( com.is_opened() == false ){
 			return -EGCC_COMMIT_FAIL;
 		}
@@ -57,4 +62,37 @@ int get_tree( TREE& tree, std::string& commit_hash )
 	tree.open_tree( hash );
 	return GT_SUCCESS;
 
+}
+
+
+int DEFAULT_CAT( std::string hash )
+{
+	OBJ obj;
+	obj.get_new_object( hash );
+	int type = obj.object_type();
+	switch(type){
+		case BLOB_OBJECT:{
+			obj.cat_blob_object();
+			return CAT_SUCCESS;
+			break;
+		}
+		case TREE_OBJECT:{
+			obj.discard_object();
+			TREE tree;
+			tree.open_tree( hash );
+			tree.cat();
+			return CAT_SUCCESS;
+			break;
+		}
+		case COMMIT_OBJECT:{
+			obj.discard_object();
+			commit com( hash );
+			com.cat();
+			return CAT_SUCCESS;
+			break;
+		}
+		default:{
+			return CAT_FAILURE;
+		}
+	}
 }

@@ -13,7 +13,8 @@ enum gct_errors{
 enum gcc_errors{
 	GCC_SUCCESS = 0,
 	EGCC_COMMIT_FAIL,
-	EGCC_EMPTY_BRANCH
+	EGCC_EMPTY_BRANCH,
+	EGCC_GETHEAD_FAIL
 };
 
 enum gt_errors{
@@ -26,5 +27,10 @@ int get_current_tree( TREE& tree );
 int get_current_commit( commit& com );
 
 int get_tree( TREE& tree, std::string& commit_hash );
+
+#define CAT_SUCCESS 0
+#define CAT_FAILURE -1
+
+int DEFAULT_CAT( std::string hash );
 
 #endif

@@ -1,19 +1,5 @@
 #include "add.h"
 
-
-/****************** TEMP FUNCTIONS
- *** functions that will be used when the actual functions are not ready
- */
-#define T_OBJECT "8f8e85330221ad054d67516331c5bfbd117aa3c9"
-
-static int get_current_tree( TREE* tree )
-{
-	tree->open_tree(T_OBJECT);
-	return 0;
-}
-/****************** END ************/
-
-
 int STAGE::change_staging_file( std::string s_file )
 {
 	staging_file = s_file;
@@ -223,12 +209,16 @@ int DEFAULT_ADD( std::vector<std::string> filelist )
 	auto begin = filelist.cbegin();
 	auto end=filelist.end();
 
-	tmp = get_current_tree( &tree );
+	tmp = get_current_tree( tree );
+	if( tmp != GCT_SUCCESS )
+		return -EDEFAULT_ADD_CURRENT_TREE;
 	for( ; begin != end; begin++ ){
 		tmp = stager.try_add( *begin, &tree );
 		switch(tmp){
 			case TA_SUCCESS:
 				continue;
+			default:
+				return -EDEFAULT_TRY_ADD_FAIL;
 		}
 	}
 

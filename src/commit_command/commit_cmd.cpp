@@ -71,7 +71,12 @@ int DEFAULT_COMMIT( std::string message )
 		std::cerr<<"Commit message compulsary\n";
 		return -COMMIT_FAILURE;
 	}
-	branch = getHEAD();
+
+	ret = getHEAD( branch );
+	if( ret != GETHEAD_SUCCESS ){
+		return -COMMIT_FAILURE;
+	}
+	
 	if( ! branch.empty() ){
 		hash = read_branch( branch );	
 		commit cobj(hash);

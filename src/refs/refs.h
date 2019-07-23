@@ -11,7 +11,12 @@ std::string read_branch(std::string);
 
 int write_branch(std::string , std::string);
 
-std::string getHEAD();
+enum gethead_returns{
+	GETHEAD_SUCCESS,
+	EGETHEAD_NOFILE
+};
+
+int getHEAD( std::string& );
 
 int writeHEAD(std::string);
 

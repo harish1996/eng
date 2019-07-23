@@ -40,6 +40,11 @@ int main( int argc, char *argv[] )
 		if( ret != 0 )
 			cerr<<"Checkout failed\n";
 	}
+	else if( (string) argv[1] == "cat" ){
+		ret = DEFAULT_CAT( argv[2] );
+		if( ret != 0 )
+			cerr<<"Cat failed\n";
+	}
 	else{
 		cerr<<"Command unknown\n";
 	}
