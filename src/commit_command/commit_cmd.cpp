@@ -1,27 +1,5 @@
 #include "commit_cmd.h"
 
-/****************** TEMP FUNCTIONS
- *** functions that will be used when the actual functions are not ready
- */
-#define T_OBJECT "8f8e85330221ad054d67516331c5bfbd117aa3c9"
-
-int get_current_tree( TREE* tree /*, Commit object */  )
-{
-	// int tmp = get_current_commit( /* Commit object */ );
-	/* Get tree of the corresponding commit */
-	tree->open_tree(T_OBJECT);
-	return 0;
-}
-
-int get_current_commit( /* Commit reference goes here */ )
-{
-	return 0;
-}
-
-
-/****************** END ************/
-
-
 int add_staged_files( TREE *tree, std::string& hash )
 {
 	STAGE stager;
@@ -89,6 +67,10 @@ int DEFAULT_COMMIT( std::string message )
 	int ret,tmp;
 	commit new_cobj;
 
+	if( message.empty() ){
+		std::cerr<<"Commit message compulsary\n";
+		return -COMMIT_FAILURE;
+	}
 	branch = getHEAD();
 	if( ! branch.empty() ){
 		hash = read_branch( branch );	
@@ -135,8 +117,11 @@ int DEFAULT_COMMIT( std::string message )
 	hash = "GOD";
 	new_cobj.write_author( hash );
 	new_cobj.write_message( message );
-	new_cobj.create_commit( hash );
-	std::cout<<hash;
+	ret = new_cobj.create_commit( hash );
+	if( ret == -1 ){
+		return COMMIT_FAILURE;
+	}
+	// std::cout<<hash;
 	ret = writeHEAD(branch);
 	ret = write_branch(hash,branch);
 

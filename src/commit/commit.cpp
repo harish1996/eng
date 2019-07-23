@@ -8,6 +8,7 @@ int commit::open_commit( const std::string &commit_id )
 {
 	if(1 != get_new_object( commit_id ) || 1 != object_type()) {
 		std::cout << "invlaid commit id";
+		this->is_open = false;
 		return FAILURE;
 	}
 
@@ -34,7 +35,7 @@ int commit::open_commit( const std::string &commit_id )
 	getline(ss, this->_commit_message);
 	ss.read( (char *)&this->_timestamp,sizeof(time_t));
 	// getline(ss, this->_timestamp);
-
+	this->is_open = true;
 	return SUCCESS;
 }
 

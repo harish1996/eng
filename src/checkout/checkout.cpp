@@ -1,45 +1,22 @@
 #include "checkout.h"
 
-/****************** TEMP FUNCTIONS
- *** functions that will be used when the actual functions are not ready
- */
-#define T_OBJECT "78bffd68347d60004e9738c7c5955c0f9b0ab008"
 
-
-static int get_current_tree( TREE* tree /*, Commit object */  )
-{
-	// int tmp = get_current_commit( /* Commit object */ );
-	/* Get tree of the corresponding commit */
-	tree->open_tree(T_OBJECT);
-	return 0;
-}
-
-static int get_current_commit( /* Commit reference goes here */ )
-{
-	return 0;
-}
-
-
-/****************** END ************/
-
-
-int _restore_tree( std::string hash, std::string prefix )
+int _restore_tree( std::string commit_hash, std::string prefix )
 {
 	TREE new_tree;
 	TREE old_tree;
-	get_current_tree( &old_tree );
-	new_tree.open_tree( hash );
+	int ret;
+	ret = get_current_tree( old_tree );
+	if( ret != GCT_SUCCESS )
+		return -EUPD_TREE_ERR;
+	// get_current_tree( &old_tree );
+	// new_tree.open_tree( hash );
+	ret = get_tree( new_tree, commit_hash );
+	if( ret != GT_SUCCESS )
+		return -EUPD_TREE_ERR;
 	return _restore_tree( &new_tree, &old_tree, prefix );
 }
 
-enum restore_returns{
-	UPD_SUCCESS = 0,
-	EUPD_BLOB_OBJMISSING,
-	EUPD_BLOB_OBJCORRUPT,
-	EUPD_BLOB_BUG,
-	EUPD_BLOB_CANT_REMOVE,
-	EUPD_BLOB_CANT_MKDIR
-};
 
 int _update_blob( TREE* tree, std::string filename, struct entry *node )
 {
@@ -243,16 +220,25 @@ int _restore_tree( TREE *new_tree, TREE *old_tree, std::string prefix )
 	return UPD_SUCCESS;
 }
 
+
 int DEFAULT_CHECKOUT( std::string str )
 {
-	std::string hash,branch;
+	std::string commit_hash,branch;
+	int ret;
+	TREE tree;
 
 	if( str.length() == 40 )
-		hash = str;
+		commit_hash = str;
 	else{
 		branch = str;
-		hash = read_branch( branch );
+		commit_hash = read_branch( branch );
 	}
-
-	return _restore_tree( hash, "" );
+	
+	ret = _restore_tree( commit_hash, "" );
+	if( ret != UPD_SUCCESS )
+		return -CHECKOUT_FAILURE;
+	ret = writeHEAD( str );
+	if( ret != 0 )
+		return -CHECKOUT_FAILURE;
+	return CHECKOUT_SUCCESS;
 }

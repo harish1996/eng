@@ -4,6 +4,7 @@
 #include "../add_command/add.h"
 #include "../refs/refs.h"
 #include "../commit/commit.h"
+#include "../misc/misc.h"
 
 enum add_staged_files_returns{
 	ASF_SUCCESS = 0,
