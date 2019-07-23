@@ -32,6 +32,8 @@ int commit::open_commit( const std::string &commit_id )
 	getline(ss, this->_author);
 	getline(ss, this->_tree_id);
 	getline(ss, this->_commit_message);
+	ss.read( (char *)&this->_timestamp,sizeof(time_t));
+	// getline(ss, this->_timestamp);
 
 	return SUCCESS;
 }
@@ -84,6 +86,12 @@ int commit::get_message( std::string &commit_message )
 	return SUCCESS;
 }
 
+int commit::get_timestamp( std::string &timestamp )
+{
+	timestamp = ctime(&this->_timestamp);
+	return 1;
+}
+
 int commit::write_parents( int num, const std::string *parents )
 {
 	if(num < 1 || num > 2)
@@ -132,6 +140,7 @@ int commit::create_commit( std::string &hash )
 	}
 	std::stringstream ss;
 	unsigned char hashnum[21];
+	this->_timestamp = time( NULL );
 	ss << this->_commit_type << " "; // write commit type
 	hash_strtonum(this->_parents[0], hashnum);
 	hashnum[20] = '\0';
@@ -141,7 +150,10 @@ int commit::create_commit( std::string &hash )
 		hashnum[20] = '\0';
 		ss << hashnum; // write this for multiple parent
 	}
-	ss << this->_author << '\n' << this->_tree_id << '\n' << this->_commit_message << '\n'; // write author, tree id and commit message
+
+	// write author, tree id and commit message
+	ss << this->_author << '\n' << this->_tree_id << '\n' << this->_commit_message << '\n' ; 
+	ss.write( (const char *)&this->_timestamp, sizeof(time_t) );
 	int ret = create_object( ss , 1 );
 	if(ret == 0)
 		hash = get_hash();
@@ -152,11 +164,13 @@ void commit::cat()
 {
 	if(-1 == this->_commit_type || this->_parents[0].empty() || this->_author.empty() || this->_tree_id.empty() || this->_commit_message.empty()) {
 		std::cout << "some parameters not set\n\n";
-		return;
+		// return;
 	}
 	std::cout << "Commit Type : " << this->_commit_type << "\n";
 	std::cout << "Parent(s) : " << this->_parents[0] << " " << this->_parents[1] << "\n";
 	std::cout << "Author : " << this->_author << "\n";
+	std::cout << "Time : " << ctime(&this->_timestamp) << "\n";
 	std::cout << "Tree Id : " << this->_tree_id << "\n";
 	std::cout << "Commit Message : " << this->_commit_message << "\n";
+
 }
