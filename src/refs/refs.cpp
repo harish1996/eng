@@ -1,108 +1,109 @@
 #include"refs.h"
+/**
+* @brief read branch reads a branch refrence and return a hash value
+* @param branch name of having HASH
+* @return 40 digits long string HASH value
+**/
+std::string read_branch(std::string s){
 
-char* read_branch(char s[]){
-
-	char  *buffer,str1[] = ".eng/branches/" ;
-
-	int a,b,c;
-
-	a = strlen(str1);
-	b = strlen(s);
-	c = a+b+1;
-
-	char *str2;
-
-	str2 = (char*)malloc(c); 
+	/**
+	** path to get hash value argument of function contaion current branch name 
+	*/
+	std::string str2,str1 = ".eng/branches/" ;
+	char * buffer;
 	buffer = (char*)malloc(41);
-	strcpy(str2,str1);
-
-	strcat(str2,s);
-
+	str2 = str1 + s;
 	FILE *fp ;
-
-	fp = fopen(str2, "r");
-	if (fp == NULL)
-	{
-		printf("error\n");
-		return '\0';
+	fp = fopen(str2.c_str(), "r");
+	if (fp == NULL){
+		str2.clear();
+		return str2;
 	}
 	else{
-		
+			/*
+			** SHA-1 is a cryptographic hash function which takes an input  and produces 20-byte has
+			 value known as a message digest – typically rendered as a hexadecimal number, 40 digits long.
+			*/
         	fread(buffer, 40, 1, fp); 
-        	//cout << buffer; 
- 
 	}
 	fclose(fp);
 	buffer[40] = 0;
-	//printf("%s\n",buffer );
-	return(buffer);
-
+	/*
+	** character pointer to string type cast
+	*/
+	return((std::string)buffer);
 }
+/*
+* @brief writes to an existing branch
+* @param HASH value in that branch
+* @param branch name of which we will write HASH
+* @return 
+*** 0 success
+*** -1 error in opening file
+*/
+int write_branch(std::string hash, std::string branch_name){
 
-int write_branch(char *hash, char *branch_name){
-
-	char str1[] = ".eng/branches/" ;
-
-	int a,b,c;
-
-	a = strlen(str1);
-	b = strlen(branch_name);
-	c = a+b+1;
-
-	char *str2;
-
-	str2 = (char*)malloc(c); 
-	//buffer = (char*)malloc(41);
-	strcpy(str2,str1);
-	strcat(str2,branch_name);
-
+	std::string str1 = ".eng/branches/" ;
+	std::string str2;
+	str2 = str1 + branch_name;
 	FILE *fp;
-	fp = fopen(str2,"w");
-	if(fp == NULL){
-		printf("error code\n");
-		return '\0';
-	}else{
-		fwrite(hash,40,1,fp);
+	fp = fopen(str2.c_str(),"w");
+	if(fp == NULL)
+		return -1;
+	else{
+		/*
+		** string to char pointer conversion
+		*/
+		fwrite(hash.c_str(),40,1,fp);
 	}
 	fclose(fp);
-
 	return 0;
 }
 
+/*
+*@brief function returns a hash value corresponding to HEAD with the corresponding branch(if any)
+@return 
+*** return branch name(head points to branch) : success 
+*** return empty string : failure
+*/
+std::string getHEAD(){
 
-char * getHEAD(){
 	char *buffer,ch;
 	FILE *fp;
 	int count = 0;
-
+	std::string str1 = "emptystring";
 	buffer = (char*)malloc(100);
 	fp = fopen(".eng/HEAD","r");
-
 	if(fp == NULL){
-		printf("errorcode\n");
-		return NULL;
-	}else{
+		str1.clear();
+		return str1;
+	}
+	else{
 		while((ch=fgetc(fp)) != (EOF) && ch !='\n' && ch !='\0'){
 			buffer[count] = ch;
-			count++;
-			// printf("%c\n",ch );
+			count++;	
 		}
 	}
 	fclose(fp);
 	buffer[count] = 0;
-	return(buffer);
+	return((std::string)buffer);
 }
 
-int writeHEAD(char *cur_branch){
+/*
+* @brief overwrites HEAD pointer to new value
+* @param current branch
+* return
+***  0 success
+*** -1 failure
+*/
+int writeHEAD(std::string cur_branch){
 
-	
 	FILE *fp;
 	fp = fopen(".eng/HEAD","w");
-	if(fp == NULL){
-		printf("error code\n");
-		return '\0';
-	}else{
-		fwrite(cur_branch,100,1,fp);
+	if(fp == NULL)
+		return -1;
+	else{
+		fwrite(cur_branch.c_str(),100,1,fp);
 	}
 	fclose(fp);
 	return 0;

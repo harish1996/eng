@@ -1,16 +1,18 @@
 #ifndef _REFS_H
 #define _REFS_H
 
+#include<iostream>
+#include<string>
+#include<cstdlib>
 #include<stdio.h>
-#include<stdlib.h>
 #include<string.h>
 
-char* read_branch(char []);
+std::string read_branch(std::string);
 
-int write_branch(char [], char[]);
+int write_branch(std::string , std::string);
 
-char *getHEAD();
+std::string getHEAD();
 
-int writeHEAD(char []);
+int writeHEAD(std::string);
 
 #endif
