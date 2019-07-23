@@ -13,12 +13,13 @@ AR=ar
 default: test
 
 add.a: ${TREE}/tree.a add.o
+	@rm -f add.a
 	${AR} -rcT $@ $^
 
-${TREE}/tree.a:
+${TREE}/tree.a: ${OBJECTS}/objects.a
 	make -C ${TREE} tree.a
 
-${OBJECTS}/objects.a: 
+${OBJECTS}/objects.a: ${GZSTREAM}/libgzstream.a
 	make -C ${OBJECTS} objects.a
 
 ${GZSTREAM}/libgzstream.a:
@@ -36,5 +37,8 @@ test: test.o add.a
 	g++ ${CPPFLAGS} $^ -o $@ ${LDFLAGS}
 
 clean:
+	make -C ${TREE} clean
+	make -C ${OBJECTS} clean
 	@rm -f tree
 	@rm -f *.o
+	@rm -f add.a

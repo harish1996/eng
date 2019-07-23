@@ -6,7 +6,7 @@
  */
 #define T_OBJECT "8f8e85330221ad054d67516331c5bfbd117aa3c9"
 
-int get_current_tree( TREE* tree )
+static int get_current_tree( TREE* tree )
 {
 	tree->open_tree(T_OBJECT);
 	return 0;
@@ -20,6 +20,14 @@ int STAGE::change_staging_file( std::string s_file )
 	return 1;
 }
 
+static int extract_info( std::string str, std::string& name, std::string& hash )
+{
+	int tmp = str.find_first_of(1);
+	name = str.substr(0,tmp);
+	hash = str.substr(tmp+1);
+	return 0;
+}
+
 #define BUF_SIZE 256
 void STAGE::populate()
 {
@@ -28,19 +36,26 @@ void STAGE::populate()
 	if( ! stream.is_open() )
 		return;
 	std::string line_str;
+	std::string name,hash;
 	bool end= false;
 
 	while( !end ){
 		stream.getline( line, BUF_SIZE );
 		if( stream.good() ){
 			line_str += line;
-			staged.insert(line_str);
+			// line_str >> name >> (char)0 >> hash; 
+			if( ! line_str.empty() ){
+				extract_info( line_str, name, hash );
+				staged.insert( std::pair<std::string,std::string>(name,hash) );
+			}
 			line_str.clear();
 		}
 		else if( stream.eof() ){
 			line_str += line;
-			if( ! line_str.empty() )
-				staged.insert(line_str);
+			if( ! line_str.empty() ){
+				extract_info( line_str, name, hash );
+				staged.insert( std::pair<std::string,std::string>(name,hash) );
+			}
 			line_str.clear();
 			end = true;
 		}
@@ -53,6 +68,12 @@ void STAGE::populate()
 
 	}
 
+	// while( !end ){
+	// 	stream >> name >> (char)0 >> hash >> std::endl;
+	// 	if( stream.eof() ){
+	// 		end = true;
+	// 	}
+	// }
 	stream.close();
 
 }
@@ -69,17 +90,17 @@ int STAGE::flush()
 	auto it= staged.cbegin(),end = staged.cend();
 
 	for( ; it != end; it++ ){
-		stream<< *it <<std::endl;
+		stream<< it->first << (char)1 << it->second << std::endl;
 	}
 
 	stream.close();
 	return 0;
 }
 
-void STAGE::update( std::string filepath )
+void STAGE::update( std::string filepath , std::string hash )
 {
 	// std::cout<<"Updated "+filepath+"\n";
-	staged.insert(filepath);
+	staged.insert(std::pair<std::string,std::string>(filepath, hash));
 }
 
 
@@ -136,14 +157,11 @@ int STAGE::_try_add_tree( std::string filepath, TREE *tree )
 			return -ETAT_GET_FAIL;
 	}
 
-	return ret;
-
 }
 
-void STAGE::dontupdate( std::string filepath )
+void STAGE::dontupdate( std::string filepath, std::string hash )
 {
-
-	std::cout<<"Not updated "+filepath+"\n";
+	// std::cout<<"Not updated "+filepath+" with hash"+hash+" \n";
 }
 
 int STAGE::try_add( std::string filepath, TREE* tree )
@@ -159,7 +177,8 @@ int STAGE::try_add( std::string filepath, TREE* tree )
 			case -EGET_NO_OBJECT:
 			case -EGET_NO_SUBDIR:
 			case -EGET_NO_ENTRY:
-				update( filepath );
+				ret = obj.create_blob_object( filepath );
+				update( filepath, obj.get_hash() );
 				return TA_SUCCESS;
 			case -EGET_INVNAME:
 			case -EGET_TYPE:
@@ -170,18 +189,30 @@ int STAGE::try_add( std::string filepath, TREE* tree )
 		}
 	}
 
-	ret = obj.hash_filecontents( filepath );
-	if( ret != 0 )
+	ret = obj.create_blob_object( filepath );
+	if( ret == -3 )
 		return -ETA_HASH_FAIL;
 
 	hash = obj.get_hash();
 
 	if( hash == prev_hash )
-		dontupdate( filepath );
+		dontupdate( filepath, hash );
 	else
-		update( filepath );
+		update( filepath, hash );
 
 	return TA_SUCCESS;
+}
+
+int STAGE::try_remove( std::string filepath )
+{
+	auto it = staged.find( filepath );
+	if( it != staged.end() ){
+		staged.erase(it);
+		return TR_SUCCESS;
+	}
+	else
+		return -ETR_EXIST;
+
 }
 
 int DEFAULT_ADD( std::vector<std::string> filelist )
@@ -197,6 +228,27 @@ int DEFAULT_ADD( std::vector<std::string> filelist )
 		tmp = stager.try_add( *begin, &tree );
 		switch(tmp){
 			case TA_SUCCESS:
+				continue;
+		}
+	}
+
+	stager.flush();
+	return 0;
+}
+
+int DEFAULT_RMCACHE( std::vector<std::string> filelist )
+{
+	// TREE tree;
+	STAGE stager;
+	int tmp;
+	auto begin = filelist.cbegin();
+	auto end=filelist.end();
+
+	// tmp = get_current_tree( &tree );
+	for( ; begin != end; begin++ ){
+		tmp = stager.try_remove( *begin);
+		switch(tmp){
+			case TR_SUCCESS:
 				continue;
 		}
 	}

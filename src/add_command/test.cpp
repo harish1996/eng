@@ -7,10 +7,20 @@
 
 using namespace std;
 
+// static int extract_info( std::string str, std::string& name, std::string& hash )
+// {
+// 	int tmp = str.find_first_of(1);
+// 	name = str.substr(0,tmp-1);
+// 	hash = str.substr(tmp+1);
+// 	return 0;
+// }
+
 int main( int argc, char *argv[] )
 {
 	// TREE tr;
 	// STAGE stager;
+
+
 	std::vector<std::string> paths;
 
 	for( int i=1; i<argc; i++ )

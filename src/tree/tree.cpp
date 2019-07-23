@@ -149,6 +149,7 @@ int TREE::_get_immediate_parent_tree( std::string dirname, TREE* &parent )
 {
 	std::string dirpath;
 	int tmp = full_dirpath( dirname, dirpath );
+
 	if( tmp >= 0 ){
 		return __get_immediate_parent_tree( dirpath, parent );
 	}
@@ -267,6 +268,8 @@ int TREE::_add_object( std::string name, std::string hash, int type, bool recurs
 	int ret,tmp;
 	struct entry *ptr;
 
+
+	
 	// Check for duplicates
 	ret = _get_object( name, h, type );
 	if( ret == GET_SUCCESS )
@@ -277,6 +280,7 @@ int TREE::_add_object( std::string name, std::string hash, int type, bool recurs
 		return -EADD_INVNAME;
 	else if( !recursive && ( ret == -EGET_NO_SUBDIR || ret == -EGET_NO_ENTRY ) )
 		return -EADD_NOSUBD;
+
 
 add_block:
 	// Get the directory which is next inorder in the given path
@@ -329,6 +333,7 @@ add_block:
 			}
 		}
 	}
+
 	return ADD_SUCCESS;
 }
 
@@ -840,6 +845,7 @@ int TREE::_get_object( std::string name, std::string& hash, int type )
 	std::string depth;
 	TREE *parent;
 
+
 	int ret = _get_immediate_parent_tree( name, parent );
         if( ret == -EGET_NO_PARENT )
 		return _get_local_object( name, hash, type );
@@ -955,11 +961,9 @@ void TREE::_rec_cat( int indent )
 		std::cout<< it->second.hash <<" ";
 		std::cout<< it->first<<"\n";
 		if( TYPE(it->second.type) == TREE_OBJ ){
-			if( it->second.s_tree ){
-				if( it->second.s_tree->sub_tree ){
-					it->second.s_tree->sub_tree->_rec_cat( indent+1 );
-				}
-			}
+			TREE *tr;
+			int ret = _get_child_tree( it->first, tr );
+			tr->_rec_cat( indent + 1);
 		}
 	}
 }
@@ -967,4 +971,64 @@ void TREE::_rec_cat( int indent )
 void TREE::rec_cat()
 {
 	_rec_cat( 0 );
+}
+
+/****************** TEMP FUNCTIONS
+ *** functions that will be used when the actual functions are not ready
+ */
+#define T_OBJECT "8f8e85330221ad054d67516331c5bfbd117aa3c9"
+
+static int get_current_tree( TREE* tree )
+{
+	tree->open_tree(T_OBJECT);
+	return 0;
+}
+
+static int update_current_tree( TREE *tree )
+{
+	std::cout<< tree->get_hash();
+	return 0;
+}
+/****************** END ************/
+
+enum default_rm_errors{
+	RM_SUCCESS = 0,
+	ERM_TREE_BUG
+};
+
+
+int DEFAULT_RM_TREE( std::vector<std::string> filelist )
+{
+	TREE tree;
+	// STAGE stager;
+	int tmp;
+	std::string hash;
+	auto begin = filelist.cbegin();
+	auto end=filelist.end();
+
+	// tmp = get_current_tree( &tree );
+	for( ; begin != end; begin++ ){
+		tmp = tree.remove_blob( *begin );
+		switch(tmp){
+			case REM_SUCCESS:
+				continue;
+			case -EREM_TYPE:
+				tmp = tree.remove_subtree( *begin );
+				switch(tmp){
+					case REM_SUCCESS:
+						continue;
+					default:
+						return -ERM_TREE_BUG;
+				}
+				break;
+			default:
+				std::cerr<<tmp<<*begin<<" doesn't exist."<<std::endl;
+				continue;
+		}
+	}
+
+	tmp = tree.write_tree( hash );
+	tmp = update_current_tree( &tree );
+	// stager.flush();
+	return RM_SUCCESS;
 }

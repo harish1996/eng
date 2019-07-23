@@ -73,6 +73,14 @@ public:
 	// @return 0 on success, -2 if file specified doesn't exist 
 	int create_blob_object( const std::string filename );
 
+	// @func create_file_from_blob
+	// @brief Creates file with `filename` using blob
+	//
+	// @param filename Filename
+	//
+	// @return 0 on success, -1 if object not created, -3 if not blob object
+	int create_file_from_blob( const std::string filename );
+
 	// @func get_hash_filecontents
 	// @brief Computes hash of the file contents 
 

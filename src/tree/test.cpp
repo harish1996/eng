@@ -58,16 +58,27 @@ int main()
 	TREE first;
 	OBJ obj;
 	string hash;
+	vector<string> files;
 
 	cout<< obj.create_blob_object("test.cpp")<<endl;
+	hash = obj.get_hash();
+	cout<<obj.discard_object()<<endl;
+	cout<<obj.get_new_object( hash )<<endl;	
+	cout<< obj.create_file_from_blob("test_dup")<<endl;
+	// obj.cat_blob_object();
 	cout<< first.create_tree()<<endl;
 	cout<< first.recursive_add_blob("folder1/folder2/folder3/folder4/folder5/test",obj.get_hash())<<endl;
 	cout<< obj.discard_object();
 	cout<< obj.create_blob_object("Makefile")<<endl;
 	cout<< first.recursive_add_blob("folder1/folder2/folder4/make",obj.get_hash())<<endl;
-	first.rec_cat();
+	// first.rec_cat();
 	cout<< first.simulate_write_tree( hash )<<endl;
-	cout<< hash << endl;
+	// cout<< hash << endl;
+	first.rec_cat();
+
+	files.push_back("folder1/folder2/folder4");
+	files.push_back("folder1/folder2/folder3/folder4/folder5/test");
+	cout<< DEFAULT_RM_TREE(files) << endl;
 	first.rec_cat();
 	cout<<"\n";
 

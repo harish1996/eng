@@ -54,7 +54,7 @@ int OBJ::create_object( std::istream &s, char type )
 	file.open( object_path.c_str(), std::ifstream::in );
        	if( file.is_open() ){
 		file.close();
-		std::cout<<"Hash already exists\n";
+		// std::cout<<"Hash already exists\n";
 		return OBJ_EXISTS;
 	}
 	else{
@@ -144,7 +144,7 @@ int OBJ::discard_object()
 {
 	// if( objstream == 0 )
 	// 	return 1;
-	
+	hash.clear();
 	gzstreambuf *ptr = objstream.rdbuf();
 	if( ptr == NULL )
 		return 1;
@@ -189,6 +189,32 @@ int OBJ::cat_blob_object( )
 	std::cout<<buf;
 
 	return 1;
+}
+
+int OBJ::create_file_from_blob( std::string filename )
+{
+	if( hash.empty() )
+		return -1;
+
+	if( type != BLOB_OBJECT )
+		return -3;
+
+	std::ofstream file( filename.c_str() );
+
+	char buf[BUF_SIZE+1];
+
+	read_object( buf, BUF_SIZE );
+
+	while( !objstream.eof() && !objstream.fail() ){
+		buf[BUF_SIZE] = 0;
+		file<<buf;
+		read_object( buf, BUF_SIZE );
+	}
+
+	buf[objstream.gcount()] = 0;
+	file<<buf;
+
+	return 1;	
 }
 
 

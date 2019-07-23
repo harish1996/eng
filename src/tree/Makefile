@@ -10,12 +10,13 @@ CPPFLAGS=-g -I${BASE} -I${GZSTREAM} -Wall -std=c++11
 LDFLAGS=-L${BASE} -L${GZSTREAM} -lgzstream -lz
 AR=ar
 
-default: tree
+default: test
 
 tree: ${GZSTREAM}/libgzstream.a tree.o objects.o ${SHA1}/sha1.o 	
 	g++ ${CPPFLAGS} $^ -o $@  ${LDFLAGS} 
 
 tree.a: ${OBJECTS}/objects.a tree.o
+	@rm -f $@
 	${AR} -rcT $@ $^
 
 ${OBJECTS}/objects.a: 
@@ -28,10 +29,11 @@ ${GZSTREAM}/libgzstream.a:
 	g++ ${CPPFLAGS} -c $^ -o $@
 
 #test: tree.a test.o
-test: test.o tree.o ${OBJECTS}/objects.o ${SHA1}/sha1.o 
+test: test.o tree.a #tree.o ${OBJECTS}/objects.o ${SHA1}/sha1.o 
 	g++ ${CPPFLAGS} $^ -o $@ ${LDFLAGS}
 
 
 clean:
-	@rm -f tree
+	@make -C ${OBJECTS} clean
+	@rm -f test
 	@rm -f *.o

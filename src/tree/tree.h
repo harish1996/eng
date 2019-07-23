@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <sstream>
 #include <map>
+#include <vector>
 
 enum get_errors{
 	GET_SUCCESS = 0,
@@ -72,7 +73,7 @@ enum rem_returns{
     EREM_NO_MEM
 };
 
-class TREE : protected OBJ{
+class TREE : public OBJ{
 
 private:
 	bool modified;
@@ -192,5 +193,5 @@ struct entry {
 
 };
 
-
+int DEFAULT_RM_TREE( std::vector<std::string> filelist );
 #endif

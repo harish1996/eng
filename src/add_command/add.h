@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <set>
+#include <map>
 #include <ftw.h>
 #include <cstdlib>
 #include <sys/types.h>
@@ -30,16 +31,24 @@ enum add_all_returns{
 	EADDALL_NOTSUPP
 };
 
+enum try_remove_returns{
+	TR_SUCCESS = 0,
+	ETR_EXIST
+};
+
 class STAGE{
 
 private:
-	std::set<std::string> staged;
+	std::map<std::string,std::string> staged;
 	std::string staging_file;
 public:
 	STAGE( std::string staging_file = ".eng/TO_BE_STAGED" ){
 		this->staging_file = staging_file; 
 		populate();
 	}
+
+	std::map<std::string,std::string>::const_iterator cbegin(){ return staged.cbegin(); }
+	std::map<std::string,std::string>::const_iterator cend(){ return staged.cend(); }
 
 	// change_staging_file
 	// @brief Changes the staging file, while keeping everything as such
@@ -69,17 +78,17 @@ public:
 	// @brief Updates the datastructure with the filepath
 	// 
 	// @param filepath Path to the file both in the filesystem and in the tree
-	void update( std::string filepath);
+	void update( std::string filepath, std::string hash );
 	
 	// dontupdate
 	// @brief Placeholder for future purposes
 	//
 	// @param filepath Path to the file both in the filesystem and in the tree
-	void dontupdate( std::string filepath);
+	void dontupdate( std::string filepath, std::string hash );
 
-	int tree_walk(std::string filepath, TREE* tree );
+	// int tree_walk(std::string filepath, TREE* tree );
 
-	int update_wrapper( const char *fpath, const struct stat *sb, int typeflag, struct FTW *buf );
+	// int update_wrapper( const char *fpath, const struct stat *sb, int typeflag, struct FTW *buf );
 
 	int add_all_files( std::string filepath, TREE *tree );
 

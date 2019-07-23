@@ -24,3 +24,4 @@ objects.a : ${GZSTREAM}/libgzstream.a objects.o ${SHA1}/sha1.o
 clean:
 	@rm -f objects
 	@rm -f *.o
+	@rm -f objects.a
