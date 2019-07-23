@@ -20,20 +20,18 @@ int commit::open_commit( const std::string &commit_id )
 	ss << buffer;
 	delete buffer;
 
-	char *hashnum = new char[21];
-	// getline(ss, this->_commit_type, '\0');
+	char hashnum[21];
 	ss >> this->_commit_type;
-	ss.read(hashnum, 21);
+	ss.ignore(1);
+	ss.read(hashnum, 20);
 	hash_numtostr(this->_parents[0], (unsigned char *) hashnum);
 	if(2 == this->_commit_type) {
-		ss.read(hashnum, 21);
+		ss.read(hashnum, 20);
 		hash_numtostr(this->_parents[1], (unsigned char *) hashnum);
 	}
-	getline(ss, this->_author, '\0');
-	getline(ss, this->_tree_id, '\0');
-	getline(ss, this->_commit_message, '\0');
-
-	delete hashnum;
+	getline(ss, this->_author);
+	getline(ss, this->_tree_id);
+	getline(ss, this->_commit_message);
 
 	return SUCCESS;
 }
@@ -137,13 +135,13 @@ int commit::create_commit( std::string &hash )
 	ss << this->_commit_type << " "; // write commit type
 	hash_strtonum(this->_parents[0], hashnum);
 	hashnum[20] = '\0';
-	ss << hashnum << "\0"; // write parent
+	ss << hashnum; // write parent
 	if(2 == this->_commit_type) {
 		hash_strtonum(this->_parents[1], hashnum);
 		hashnum[20] = '\0';
-		ss << hashnum << "\0"; // write this for multiple parent
+		ss << hashnum; // write this for multiple parent
 	}
-	ss << this->_author << "\0" << this->_tree_id << "\0" << this->_commit_message << "\0"; // write author, tree id and commit message
+	ss << this->_author << '\n' << this->_tree_id << '\n' << this->_commit_message << '\n'; // write author, tree id and commit message
 	int ret = create_object( ss , 1 );
 	if(ret == 0)
 		hash = get_hash();
@@ -152,8 +150,10 @@ int commit::create_commit( std::string &hash )
 
 void commit::cat()
 {
-	if(-1 == this->_commit_type || this->_parents[0].empty() || this->_author.empty() || this->_tree_id.empty() || this->_commit_message.empty())
-		std::cout << "some parameters not set\n";
+	if(-1 == this->_commit_type || this->_parents[0].empty() || this->_author.empty() || this->_tree_id.empty() || this->_commit_message.empty()) {
+		std::cout << "some parameters not set\n\n";
+		return;
+	}
 	std::cout << "Commit Type : " << this->_commit_type << "\n";
 	std::cout << "Parent(s) : " << this->_parents[0] << " " << this->_parents[1] << "\n";
 	std::cout << "Author : " << this->_author << "\n";
