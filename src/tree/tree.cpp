@@ -973,6 +973,71 @@ void TREE::rec_cat()
 	_rec_cat( 0 );
 }
 
+static std::string new_path( std::string dirpath, std::string filename )
+{
+	if( dirpath[ dirpath.size() - 1 ] != '/' )
+		dirpath += '/';
+	return dirpath+filename;
+}
+
+
+
+int TREE::tree_to_fs( std::string path )
+{
+	std::map<std::string,struct entry>::const_iterator begin,end;
+	std::string prefix;
+
+	if( path.empty() ){
+		begin = cbegin( );
+		end = cend();
+		prefix = "" ;
+	}
+	else{
+		begin = cbegin( path );
+		end = cend( path );
+		int ret = mkdir( path.c_str(), 0777 );
+		if( ret != 0 ) {
+			if( errno != EEXIST )
+				return -ETREE_TO_FS_MKDIR_FAIL; 
+		}
+		prefix = path+"/";
+	}
+
+	std::string name;
+
+	for(; begin != end; begin++ ){
+		std::string fname = begin->first;
+		struct entry* node = ( struct entry *)&begin->second;
+
+		name = prefix + fname;
+		// name = new_path( path, fname );
+		if( TYPE(node->type) == BLOB_OBJ ){
+			OBJ obj;
+			int ret = obj.create_file_from_blob( node->hash, name );
+			switch(ret){
+				case CFB_SUCCESS:
+					continue;
+				case -ECFB_BUG:
+					return -ETREE_TO_FS_BUG;
+				default:
+					return -ETREE_TO_FS_CORRUPT;
+			}
+		}
+		else{
+			int ret = tree_to_fs( name );
+			switch(ret){
+				case TREE_TO_FS_SUCCESS:
+					continue;
+				default:
+					return ret;
+			}
+		}
+	}
+
+	return TREE_TO_FS_SUCCESS;
+
+}
+
 /****************** TEMP FUNCTIONS
  *** functions that will be used when the actual functions are not ready
  */

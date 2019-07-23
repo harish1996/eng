@@ -191,7 +191,7 @@ int OBJ::cat_blob_object( )
 	return 1;
 }
 
-int OBJ::create_file_from_blob( std::string filename )
+int OBJ::create_file( std::string filename )
 {
 	if( hash.empty() )
 		return -1;
@@ -215,6 +215,41 @@ int OBJ::create_file_from_blob( std::string filename )
 	file<<buf;
 
 	return 1;	
+}
+
+/**
+ * @brief Creates file with `filename` from the given blob's hash
+ * 
+ * @param hash Hash of the blob
+ * @param filename Name of the target file
+ * 
+ * @return CFB_SUCCESS on success,
+ *	-ECFB_NOOBJ if hash doesnt exist
+ *	-ECFB_INVOBJ if the object is invalid
+ *	-ECFB_NOTBLOB if the object is not a blob
+ *	-ECFB_BUG if there is a bug in this function
+ */
+int OBJ::create_file_from_blob( std::string& hash, std::string& filename )
+{
+	int ret;
+	discard_object();
+	ret = get_new_object( hash );
+	if( ret != 1 )
+		return ret;
+	if( object_type() != BLOB_OBJECT )
+		return -ECFB_NOTBLOB;
+	ret = create_file( filename );
+	switch(ret){
+		case 1:
+			return CFB_SUCCESS;
+			break;
+		case -1:
+		case -3:
+			return -ECFB_BUG;
+			break;
+	}
+
+	return CFB_SUCCESS;
 }
 
 

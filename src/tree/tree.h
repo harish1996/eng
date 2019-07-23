@@ -7,6 +7,9 @@
 #include <sstream>
 #include <map>
 #include <vector>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
 
 enum get_errors{
 	GET_SUCCESS = 0,
@@ -73,6 +76,13 @@ enum rem_returns{
     EREM_NO_MEM
 };
 
+enum tree_to_fs_returns{
+	TREE_TO_FS_SUCCESS = 0,
+	ETREE_TO_FS_BUG,
+	ETREE_TO_FS_CORRUPT,
+	ETREE_TO_FS_MKDIR_FAIL
+};
+
 class TREE : public OBJ{
 
 private:
@@ -125,6 +135,19 @@ public:
         std::map<std::string,struct entry>::const_iterator cbegin();
         std::map<std::string,struct entry>::const_iterator cend();
         std::map<std::string,struct entry>::const_iterator cinv();
+	/**
+	 * @brief Writes the tree structure in the filesystem i.e. creates the folder 
+	 * 	structure as in the tree to the filesystem.
+	 * 
+	 * @param path Path of the tree to write. Send empty path to write entire tree.
+	 *
+	 * @return TREE_TO_FS_SUCCESS on success,
+	 *	-ETREE_TO_FS_BUG if there is a bug in the code
+	 * 	-ETREE_TO_FS_CORRUPT if the objects folder is corrupt
+	 *	-ETREE_TO_FS_MKDIR_FAIL if creation of folders failed
+	 */
+	int tree_to_fs( std::string path );
+	
 	void cat();
 	void _rec_cat( int indent );
 	void rec_cat();

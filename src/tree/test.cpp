@@ -59,12 +59,13 @@ int main()
 	OBJ obj;
 	string hash;
 	vector<string> files;
+	string path;
 
 	cout<< obj.create_blob_object("test.cpp")<<endl;
 	hash = obj.get_hash();
-	cout<<obj.discard_object()<<endl;
-	cout<<obj.get_new_object( hash )<<endl;	
-	cout<< obj.create_file_from_blob("test_dup")<<endl;
+	cout<<obj.discard_object()<<endl;	
+	path = "test_dup";
+	cout<< obj.create_file_from_blob(hash,path)<<endl;
 	// obj.cat_blob_object();
 	cout<< first.create_tree()<<endl;
 	cout<< first.recursive_add_blob("folder1/folder2/folder3/folder4/folder5/test",obj.get_hash())<<endl;
@@ -73,6 +74,9 @@ int main()
 	cout<< first.recursive_add_blob("folder1/folder2/folder4/make",obj.get_hash())<<endl;
 	// first.rec_cat();
 	cout<< first.simulate_write_tree( hash )<<endl;
+	cout<< hash<<endl;
+	path.clear();
+	cout<< first.tree_to_fs( path );
 	// cout<< hash << endl;
 	first.rec_cat();
 

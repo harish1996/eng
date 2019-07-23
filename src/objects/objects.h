@@ -13,7 +13,15 @@
 #define COMMIT_OBJECT 1
 #define TREE_OBJECT 2
 
-#define DEFAULT_OBJECTS_PATH ".objects/"
+#define DEFAULT_OBJECTS_PATH ".eng/objects/"
+
+enum create_file_from_blob_returns{
+	CFB_SUCCESS = 0,
+	ECFB_NOOBJ,
+	ECFB_INVOBJ,
+	ECFB_NOTBLOB,
+	ECFB_BUG
+};
 
 class OBJ : public SHA1
 {
@@ -73,13 +81,28 @@ public:
 	// @return 0 on success, -2 if file specified doesn't exist 
 	int create_blob_object( const std::string filename );
 
-	// @func create_file_from_blob
+
+	/**
+	 * @brief Creates file with `filename` from the given blob's hash
+	 * 
+	 * @param hash Hash of the blob
+	 * @param filename Name of the target file
+	 * 
+	 * @return CFB_SUCCESS on success,
+	 *	-ECFB_NOOBJ if hash doesnt exist
+	 *	-ECFB_INVOBJ if the object is invalid
+	 *	-ECFB_NOTBLOB if the object is not a blob
+	 *	-ECFB_BUG if there is a bug in this function
+	 */
+	int create_file_from_blob( std::string& hash, std::string& filename );
+
+	// @func create_file
 	// @brief Creates file with `filename` using blob
 	//
 	// @param filename Filename
 	//
 	// @return 0 on success, -1 if object not created, -3 if not blob object
-	int create_file_from_blob( const std::string filename );
+	int create_file( const std::string filename );
 
 	// @func get_hash_filecontents
 	// @brief Computes hash of the file contents 

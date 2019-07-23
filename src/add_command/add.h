@@ -104,6 +104,8 @@ public:
 	// @return
 	int try_add( std::string filepath, TREE* tree );
 
+	int try_remove( std::string filepath );
+
 	~STAGE(){
 		flush();
 		staged.clear();
