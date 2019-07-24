@@ -14,6 +14,7 @@ PUSH_PULL=${SRC}/push_pull
 REDIRECT=${SRC}/redirect
 REFS=${SRC}/refs
 MISC=${SRC}/misc
+LOG=${SRC}/log
 # TREE=${SRC}/tree
 
 CPPFLAGS=-g -I ${BASE} -I ${GZSTREAM} -std=c++11
@@ -21,7 +22,7 @@ LDFLAGS=-L ${BASE} -L ${GZSTREAM} -lgzstream -lz
 AR=ar
 
 master_deps = ${INIT}/init.o ${COMMIT_CMD}/commit_cmd.o ${ADD_CMD}/add.o ${TREE}/tree.o ${OBJECTS}/objects.o ${COMMIT}/commit.o
-master_deps += ${SHA1}/sha1.o ${REFS}/refs.o ${CHECKOUT}/checkout.o ${MISC}/misc.o
+master_deps += ${SHA1}/sha1.o ${REFS}/refs.o ${CHECKOUT}/checkout.o ${MISC}/misc.o ${REDIRECT}/redirect.o ${LOG}/log.o
 
 default: eng
 
