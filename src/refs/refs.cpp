@@ -4,7 +4,7 @@
 * @param branch name of having HASH
 * @return 40 digits long string HASH value
 **/
-std::string read_branch(std::string s){
+std::string read_branch(const std::string& s) {
 
 	/**
 	** path to get hash value argument of function contaion current branch name 
@@ -41,7 +41,7 @@ std::string read_branch(std::string s){
 *** 0 success
 *** -1 error in opening file
 */
-int write_branch(std::string hash, std::string branch_name){
+int write_branch(const std::string& hash, const std::string& branch_name) {
 
 	std::string str1 = ".eng/branches/" ;
 	std::string str2;
@@ -67,7 +67,7 @@ int write_branch(std::string hash, std::string branch_name){
 *** return branch name(head points to branch) : success 
 *** return empty string : failure
 */
-int getHEAD( std::string& head){
+int getHEAD( char &head_type, std::string& head) {
 
 	char *buffer,ch;
 	FILE *fp;
@@ -75,11 +75,12 @@ int getHEAD( std::string& head){
 	std::string str1 = "emptystring";
 	buffer = (char*)malloc(100);
 	fp = fopen(".eng/HEAD","r");
-	if(fp == NULL){
+	if(fp == NULL) {
 		head.clear();
 		return -EGETHEAD_NOFILE;
 	}
-	else{
+	else {
+		head_type = fgetc(fp);
 		while((ch=fgetc(fp)) != (EOF) && ch !='\n' && ch !='\0'){
 			buffer[count] = ch;
 			count++;	
@@ -98,15 +99,16 @@ int getHEAD( std::string& head){
 ***  0 success
 *** -1 failure
 */
-int writeHEAD(std::string cur_branch){
+int writeHEAD(char head_type, const std::string& cur_branch) {
 
 	FILE *fp;
-	fp = fopen(".eng/HEAD","w");
+	fp = fopen(".eng/HEAD", "w");
 	if(fp == NULL)
 		return -1;
-	else{
-		cur_branch += "\n";
-		fwrite(cur_branch.c_str(),cur_branch.length(),1,fp);
+	else {
+		std::string branch = cur_branch + "\n";
+		fwrite(&head_type, sizeof(char), 1, fp);
+		fwrite(branch.c_str(), branch.length(), 1, fp);
 	}
 	fclose(fp);
 	return 0;

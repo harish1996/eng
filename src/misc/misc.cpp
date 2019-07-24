@@ -20,20 +20,20 @@ int get_current_tree( TREE& tree )
 int get_current_commit( commit& com )
 {
 	std::string branch,hash;
+	char head_type;
 	int ret;
 
-	ret = getHEAD( branch );
-	if( ret != GETHEAD_SUCCESS ){
+	ret = getHEAD( head_type, branch );
+	if( ret != GETHEAD_SUCCESS ) {
 		return -EGCC_GETHEAD_FAIL;
 	}
-	if( ! branch.empty() ){
+	if( ! branch.empty() ) {
 
-		if( branch.size() == 40 ){
+		if( 1 == head_type )
 			hash = branch;
-		}
-		else{
-			hash = read_branch( branch );		
-		}
+		else
+			hash = read_branch( branch );
+
 		ret = com.open_commit(hash);
 		if( ret != 0 )
 			return -EGCC_COMMIT_FAIL;
