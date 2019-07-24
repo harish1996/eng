@@ -1,18 +1,18 @@
 #include "push_pull.h"
 
-static int push_to_origin( const std::string &origin )
+int push_to_origin( const std::string &origin )
 {
 	std::string command = "rsync -au --exclude 'origin' .eng/ \"" + origin + "\"";
 	return system(command.c_str());
 }
 
-static int pull_from_origin( const std::string &origin )
+int pull_from_origin( const std::string &origin )
 {
 	std::string command = "rsync -au --exclude 'origin' \"" + origin + "/\" .eng";
 	return system(command.c_str());
 }
 
-static int update_origin( const std::string &origin )
+int update_origin( const std::string &origin )
 {
 	std::ofstream file;
 	file.open(".eng/origin");
@@ -21,7 +21,7 @@ static int update_origin( const std::string &origin )
 	return SUCCESS;
 }
 
-static int DEFAULT_PUSH()
+int DEFAULT_PUSH()
 {
 	std::fstream file;
 	file.open(".eng/origin");
@@ -33,7 +33,7 @@ static int DEFAULT_PUSH()
 	return push_to_origin(origin);
 }
 
-static int DEFAULT_PULL()
+int DEFAULT_PULL()
 {
 	std::fstream file;
 	file.open(".eng/origin");
