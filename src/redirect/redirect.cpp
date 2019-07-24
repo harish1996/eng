@@ -47,13 +47,18 @@ int branch_redirect( int argc, char **argv ){
 	return 0;
 }
 
+int list_branch_redirect( int argc, char **argv ){
+	int ret = DEFAULT_LIST_BRANCHES();
+}
+
 struct commands available[]={
 	{ "add", add_redirect },
 	{ "commit", commit_redirect },
 	{ "init", init_redirect },
 	{ "checkout", checkout_redirect },
 	{ "log", log_redirect },
-	{ "branch", branch_redirect }
+	{ "branch", branch_redirect },
+	{ "branch_list", list_branch_redirect }
 };
 
 #define EREDIRECT_COMMAND_NOT_FOUND 3

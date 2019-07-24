@@ -26,3 +26,9 @@ int DEFAULT_CREATE_BRANCH(std::string branch_name){
 	return CREATE_BRANCH_SUCCESS;
 }
 
+int DEFAULT_LIST_BRANCHES()
+{
+	system(" ls .eng/branches/ ");
+	return 0;
+}
+

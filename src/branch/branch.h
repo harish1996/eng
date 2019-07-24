@@ -10,4 +10,6 @@
 
 int DEFAULT_CREATE_BRANCH( std::string );
 
+int DEFAULT_LIST_BRANCHES();
+
 #endif
