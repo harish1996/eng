@@ -16,6 +16,9 @@
 #include <dirent.h>
 #include <vector>
 
+#define FILENOT_EXISTS -4
+#define UNABLE_TO_CREAT_FILE -3
+
 enum try_add_returns{
 	TA_SUCCESS = 0,
 	ETA_GET_FAIL,

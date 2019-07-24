@@ -103,12 +103,16 @@ int STAGE::add_all_files( std::string filepath, TREE *tree )
 	DIR *iterator = opendir( filepath.c_str() );
 	struct dirent *tmp;
 
+	if( (std::string)filepath == ".eng" || (std::string)filepath == ".eng/"  ){
+		return ADDALL_SUCCESS;
+	}
+
 	tmp = readdir( iterator );
 	while( tmp ){
 
 		if( tmp->d_type == DT_DIR ){
 			// std::cout<< tmp->d_name<<std::endl;
-			if( (std::string)tmp->d_name == "." || (std::string)tmp->d_name == ".." ){
+			if( (std::string)tmp->d_name == ".eng" || (std::string)tmp->d_name == "." || (std::string)tmp->d_name == ".." ){
 				tmp = readdir( iterator );				
 				continue;
 			}
@@ -164,6 +168,8 @@ int STAGE::try_add( std::string filepath, TREE* tree )
 			case -EGET_NO_SUBDIR:
 			case -EGET_NO_ENTRY:
 				ret = obj.create_blob_object( filepath );
+				if( ret == FILENOT_EXISTS || ret == UNABLE_TO_CREAT_FILE )
+					return -ETA_GET_FAIL;
 				update( filepath, obj.get_hash() );
 				return TA_SUCCESS;
 			case -EGET_INVNAME:
