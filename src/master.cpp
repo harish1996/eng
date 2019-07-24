@@ -3,6 +3,7 @@
 #include <vector>
 #include "init/init.h"
 #include "checkout/checkout.h"
+#include "log/log.h"
 
 using namespace std;
 
@@ -44,6 +45,11 @@ int main( int argc, char *argv[] )
 		ret = DEFAULT_CAT( argv[2] );
 		if( ret != 0 )
 			cerr<<"Cat failed\n";
+	}
+	else if( (string) argv[1] == "log" ){
+		ret = DEFAULT_LOG( );
+		if( ret != 0 )
+			cerr<<"Log failed\n";
 	}
 	else{
 		cerr<<"Command unknown\n";

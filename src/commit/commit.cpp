@@ -51,7 +51,6 @@ int commit::get_parents( std::string *parents )
 		std::cout << "open commit to get parents\n";
 		return FAILURE;
 	}
-	parents = new std::string[2];
 	parents[0] = std::string( this->_parents[0] );
 	if( ! this->_parents[1].empty() )
 		parents[1] = std::string( this->_parents[1] );
