@@ -154,12 +154,20 @@ void STAGE::dontupdate( std::string filepath, std::string hash )
 	// std::cout<<"Not updated "+filepath+" with hash"+hash+" \n";
 }
 
+static void remove_prefix( std::string& filepath )
+{
+	if( filepath.substr(0,2) == "./" )
+		filepath = filepath.substr(2);
+}	
+
 int STAGE::try_add( std::string filepath, TREE* tree )
 {
 	std::string hash;
 	std::string prev_hash;
 	OBJ obj;
 	int ret;
+
+	remove_prefix( filepath );
 
 	ret = tree->get_blob( filepath, prev_hash );
 	if( ret != GET_SUCCESS ){
