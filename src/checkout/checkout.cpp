@@ -14,7 +14,7 @@ int _restore_tree( std::string commit_hash, std::string prefix )
 	ret = get_tree( new_tree, commit_hash );
 	if( ret != GT_SUCCESS )
 		return -EUPD_TREE_ERR;
-	return _restore_tree( &new_tree, &old_tree, prefix );
+	return _restore_tree( &old_tree, &new_tree, prefix );
 }
 
 
@@ -52,7 +52,7 @@ int _update_blob( TREE* tree, std::string filename, struct entry *node )
 		// the file from the current folder.
 		case -EGET_NO_OBJECT:
 			ret = unlink( filename.c_str() );
-			if( ret )
+			if( ret && errno != ENOENT )
 				return -EUPD_BLOB_CANT_REMOVE;
 			break;
 
@@ -75,6 +75,10 @@ int _update_tree( TREE *old_tree, TREE *new_tree, std::string name, struct entry
 	switch(ret){
 		// If the subtree is present, restore the tree. ( Recurse ).
 		case GET_SUCCESS:
+			// If subtree has same hash, skip restoring..
+			if( hash == node->hash )
+				return UPD_SUCCESS;
+			// Otherwise recurse
 			ret = _restore_tree( old_tree, new_tree, name );
 			return ret;
 
@@ -149,7 +153,7 @@ int _try_addnew_tree( TREE *old_tree, TREE *new_tree, std::string filename, stru
 }
 
 
-int _restore_tree( TREE *new_tree, TREE *old_tree, std::string prefix )
+int _restore_tree( TREE *old_tree, TREE *new_tree, std::string prefix )
 {
 	// TREE old_tree;
 	// tmp = get_current_tree( &old_tree );
@@ -236,9 +240,9 @@ int DEFAULT_CHECKOUT( std::string str )
 	
 	ret = _restore_tree( commit_hash, "" );
 	if( ret != UPD_SUCCESS )
-		return -CHECKOUT_FAILURE;
+		return CHECKOUT_FAILURE;
 	ret = writeHEAD( str );
 	if( ret != 0 )
-		return -CHECKOUT_FAILURE;
+		return CHECKOUT_FAILURE;
 	return CHECKOUT_SUCCESS;
 }

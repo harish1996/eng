@@ -5,6 +5,7 @@
 #include "../tree/tree.h"
 #include "../refs/refs.h"
 #include "../misc/misc.h"
+#include <errno.h>
 
 enum restore_returns{
 	UPD_SUCCESS = 0,
