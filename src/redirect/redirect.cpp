@@ -83,6 +83,17 @@ int revert( int argc, char **argv )
 	return 0;	
 }
 
+int cat( int argc, char **argv )
+{
+	if( argc < 2 ){
+		std::cerr<<"Expecting argument \n";
+		return -1;
+	}
+	int ret = DEFAULT_CAT( argv[1] );
+	if( ret != 0 ) return -1;
+	return 0;
+}
+
 int help( int, char** );
 
 struct commands available[]={
@@ -97,6 +108,7 @@ struct commands available[]={
 	{ "pull", pull_redirect, "Pulls the objects from the registered remote. Args: None" },
 	{ "remote-update", update_origin_redirect, "Registers the remote. Args: Remote path" },
 	{ "revert", revert, "Reverts the current branch to another version. Args: Commit hash of the target" },
+	{ "cat", cat, "Prints out an object in readable format. Args: Hash of the object"},
 	{ "help", help, "Prints the help which is this :). Args: None" }
 };
 
