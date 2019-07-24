@@ -15,7 +15,7 @@ static int pull_from_origin( const std::string &origin );
 
 static int update_origin( const std::string &origin );
 
-static int default_push();
-static int default_pull();
+static int DEFAULT_PUSH();
+static int DEFAULT_PULL();
 
 #endif

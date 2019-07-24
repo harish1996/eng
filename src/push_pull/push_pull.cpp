@@ -21,7 +21,7 @@ static int update_origin( const std::string &origin )
 	return SUCCESS;
 }
 
-static int default_push()
+static int DEFAULT_PUSH()
 {
 	std::fstream file;
 	file.open(".eng/origin");
@@ -33,7 +33,7 @@ static int default_push()
 	return push_to_origin(origin);
 }
 
-static int default_pull()
+static int DEFAULT_PULL()
 {
 	std::fstream file;
 	file.open(".eng/origin");
