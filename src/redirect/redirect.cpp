@@ -1,64 +1,116 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include "redirect.h"
 
-char functionList[5][20] = {"add", "commit", "init"};
-int functions = sizeof(functionList);
+int add_redirect(int argc, char** argv) {
 
+	std::vector<std::string> paths; 
+	for( int i=1; i<argc; i++ )
+		paths.push_back( argv[i] );
 
-
-void add_redirect(int argc, char** argv) {
-	printf("Inside add function\n Args: \n");
-	for(int i = 0; i < argc; i++) {
-		printf("%s ", argv[i]);
-	}
+	int ret = DEFAULT_ADD( paths );
+	if( ret != 0 )
+		return -1;
+	return 0;
 }
 
-void commit_redirect(int argc, char** argv) {
-	printf("Inside commit function\n Args: \n");
-	for(int i = 0; i < argc; i++) {
-		printf("%s ", argv[i]);
-	}
+int commit_redirect(int argc, char** argv) {
+
+	std::string message;
+	int ret;
+	for( int i=1; i<argc; i++ )
+		message += (std::string)argv[i] + (std::string)" ";
+	
+	ret = DEFAULT_COMMIT( message );
+	if( ret != 0 )
+		return -1;
+	return 0;
 }
 
-void init_redirect() {
-	printf("Inside init function");
+int init_redirect( int argc, char **argv) {
+	return init();
 }
 
+int checkout_redirect( int argc, char **argv){
+	int ret = DEFAULT_CHECKOUT( argv[1] );
+	if( ret ) return -1;
+	return 0;
+}
 
-void main(int argc, char** argv) {
-	int i = 0;
-	int command = -1;
+int log_redirect( int argc, char **argv ){
+	int ret = DEFAULT_LOG();
+	if(ret) return -1;
+	return 0;
+}
 
-	if(argc >= 3) {
-		for(i = 0; i < functions - 1; i++) {
-			if(strcmp(functionList[i], argv[2]) == 0) {
-				command = i;
-			}
+int branch_redirect( int argc, char **argv ){
+	int ret = DEFAULT_CREATE_BRANCH( argv[1] );
+	if(ret) return -1;
+	return 0;
+}
+
+int list_branch_redirect( int argc, char **argv ){
+	int ret = DEFAULT_LIST_BRANCHES();
+}
+
+struct commands available[]={
+	{ "add", add_redirect },
+	{ "commit", commit_redirect },
+	{ "init", init_redirect },
+	{ "checkout", checkout_redirect },
+	{ "log", log_redirect },
+	{ "branch", branch_redirect },
+	{ "branch_list", list_branch_redirect }
+};
+
+#define EREDIRECT_COMMAND_NOT_FOUND 3
+
+int redirect( int argc, char *argv[] )
+{
+
+	int i,j;
+	int ret;
+	if( argc < 2 ){
+		std::cerr<<"No command found\n";
+		return 0;
+	}
+
+	std::map< std::string, int (*)(int, char **)> command_map;
+	int no_contents = sizeof(available)/sizeof(struct commands);
+	char **new_argv = new char*[argc-1] ;
+	std::string command;
+
+
+	for( int i=0 ; i< no_contents ; i++ ){
+		command_map.insert( std::pair<std::string, int (*)(int,char**)>(available[i].name,available[i].redirect_function) );
+	}
+
+	j=0;
+
+	for(int i=0; i< argc; i++ ){
+		if( i == 1 ) {
+			command = argv[1];
+			continue;
 		}
-		char** newArgList;
-		newArgList = (char**)malloc((argc - 3)*sizeof(char*));
-		for(i = 0; i < argc - 3; i++) {
-			newArgList[i] = (char*)malloc(20*sizeof(char));
-		}
-		for(i = 0; i < argc - 3; i++) {
-			for(int j = 0; j < 20; j++) {
-				newArgList[i][j] = argv[i + 3][j];
-			}
-			printf("%s\n", newArgList[i]);
-		}
-		// switch case to navigate to the respective functions
-		switch(command) {
-			case 0 : add_redirect(argc - 3, newArgList); break; 
-			case 1 : commit_redirect(argc - 3, newArgList); break;
-			case 2 : init_redirect(); break;
-			default: printf("\nInvalid Command! ");
-		 	 	 exit(-1);
+		else{
+			new_argv[j] = argv[i];
+			j++; 
 		}
 	}
-	else {
-		printf("Invalid Command line argument! \n");
-		exit(-1);
+
+	// std::cout<< command << std::endl;
+
+	auto it = command_map.find( command );
+	if( it != command_map.end() ){
+		ret = it->second( argc - 1, new_argv );
+		if( ret != 0 ){
+			std::cerr<<command<<" failed\n";
+			return ret;
+		}
+		return 0;
+	}
+	else{
+		std::cerr<<command<<" : command not found\n";
+		return -EREDIRECT_COMMAND_NOT_FOUND;
 	}
 
 }
+
