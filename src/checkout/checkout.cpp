@@ -228,20 +228,25 @@ int _restore_tree( TREE *old_tree, TREE *new_tree, std::string prefix )
 int DEFAULT_CHECKOUT( std::string str )
 {
 	std::string commit_hash,branch;
+	char head_type;
 	int ret;
 	TREE tree;
 
-	if( str.length() == 40 )
+	std::ifstream branch_file(".eng/branches/" + str);
+	if( !branch_file.good() ) {
 		commit_hash = str;
-	else{
+		head_type = 1;
+	}
+	else {
 		branch = str;
 		commit_hash = read_branch( branch );
+		head_type = 0;
 	}
 	
 	ret = _restore_tree( commit_hash, "" );
 	if( ret != UPD_SUCCESS )
 		return CHECKOUT_FAILURE;
-	ret = writeHEAD( str );
+	ret = writeHEAD( head_type, str );
 	if( ret != 0 )
 		return CHECKOUT_FAILURE;
 	return CHECKOUT_SUCCESS;

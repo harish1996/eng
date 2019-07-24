@@ -41,14 +41,75 @@ int log_redirect( int argc, char **argv ){
 	return 0;
 }
 
+int branch_redirect( int argc, char **argv ){
+	int ret = DEFAULT_CREATE_BRANCH( argv[1] );
+	if(ret) return -1;
+	return 0;
+}
+
+int list_branch_redirect( int argc, char **argv ){
+	int ret = DEFAULT_LIST_BRANCHES();
+}
+
+int push_redirect( int argc, char **argv )
+{
+	int ret = DEFAULT_PUSH();
+	if( ret != 0 ) return -1;
+	return 0;
+}
+
+int pull_redirect( int argc, char **argv )
+{
+	int ret = DEFAULT_PULL();
+	if( ret != 0 ) return -1;
+	return 0;
+}
+
+int update_origin_redirect( int argc, char **argv )
+{
+	int ret = DEFAULT_UPDATE_ORIGIN( argv[1] );
+	if( ret != 0 ) return -1;
+	return 0;	
+}
+
+int revert( int argc, char **argv )
+{
+	if( argc < 2 ){
+		std::cerr<<"Expecting argument \n";
+		return -1;
+	}
+	int ret = DEFAULT_REVERT( argv[1] );
+	if( ret != 0 ) return -1;
+	return 0;	
+}
+
+int help( int, char** );
 
 struct commands available[]={
-	{ "add", add_redirect },
-	{ "commit", commit_redirect },
-	{ "init", init_redirect },
-	{ "checkout", checkout_redirect },
-	{ "log", log_redirect }
+	{ "add", add_redirect, "Adds files to be staged. Args: List of files" },
+	{ "commit", commit_redirect, "Commits the files that are staged. Args: Commit message" },
+	{ "init", init_redirect, "Initializes the repository. Args: None" },
+	{ "checkout", checkout_redirect, "Modifies the working area to a different version. Args: Commit hash or branch name" },
+	{ "log", log_redirect, "Prints log. Args: None" },
+	{ "branch", branch_redirect, "Creates a branch with the current working area. Args: Branch name" },
+	{ "branch_list", list_branch_redirect, "Lists the branches available. Args: None" },
+	{ "push", push_redirect, "Pushes the objects to the registered remote. Args: None" },
+	{ "pull", pull_redirect, "Pulls the objects from the registered remote. Args: None" },
+	{ "remote-update", update_origin_redirect, "Registers the remote. Args: Remote path" },
+	{ "revert", revert, "Reverts the current branch to another version. Args: Commit hash of the target" },
+	{ "help", help, "Prints the help which is this :). Args: None" }
 };
+
+int help( int argc, char **argv )
+{
+	int no_contents = sizeof(available)/sizeof(struct commands);
+	std::cout<<"Available commands: \n";
+	for( int i=0; i<no_contents; i++ ){
+		std::cout<< available[i].name << " : " << available[i].help << "\n\n";
+	}
+	return 0;
+}
+
 
 #define EREDIRECT_COMMAND_NOT_FOUND 3
 
@@ -98,8 +159,8 @@ int redirect( int argc, char *argv[] )
 	}
 	else{
 		std::cerr<<command<<" : command not found\n";
+		help( argc, argv );
 		return -EREDIRECT_COMMAND_NOT_FOUND;
 	}
 
 }
-

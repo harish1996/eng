@@ -7,17 +7,20 @@
 #include<stdio.h>
 #include<string.h>
 
-std::string read_branch(std::string);
+#define BRANCH 0
+#define HASH 1
 
-int write_branch(std::string , std::string);
+std::string read_branch( const std::string& );
+
+int write_branch( const std::string& , const std::string& );
 
 enum gethead_returns{
 	GETHEAD_SUCCESS,
 	EGETHEAD_NOFILE
 };
 
-int getHEAD( std::string& );
+int getHEAD( char&, std::string& );
 
-int writeHEAD(std::string);
+int writeHEAD( char , const std::string& );
 
 #endif

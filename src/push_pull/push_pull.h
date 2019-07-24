@@ -6,16 +6,16 @@
 #include <string>
 
 enum error_codes {
-	SUCCESS = 0,
-	ORIGIN_NOT_SET
+	PUSH_SUCCESS = 0,
+	EPUSH_ORIGIN_NOT_SET
 };
 
-static int push_to_origin( const std::string &origin );
-static int pull_from_origin( const std::string &origin );
+int push_to_origin( const std::string &origin );
+int pull_from_origin( const std::string &origin );
 
-static int update_origin( const std::string &origin );
+int DEFAULT_UPDATE_ORIGIN( const std::string &origin );
 
-static int default_push();
-static int default_pull();
+int DEFAULT_PUSH();
+int DEFAULT_PULL();
 
 #endif

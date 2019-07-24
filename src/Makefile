@@ -11,6 +11,7 @@ CHECKOUT=${SRC}/checkout
 COMMIT=${SRC}/commit
 COMMIT_CMD=${SRC}/commit_command
 PUSH_PULL=${SRC}/push_pull
+REVERT=${SRC}/revert
 REDIRECT=${SRC}/redirect
 REFS=${SRC}/refs
 MISC=${SRC}/misc
@@ -22,7 +23,7 @@ LDFLAGS=-L ${BASE} -L ${GZSTREAM} -lgzstream -lz
 AR=ar
 
 master_deps = ${INIT}/init.o ${COMMIT_CMD}/commit_cmd.o ${ADD_CMD}/add.o ${TREE}/tree.o ${OBJECTS}/objects.o ${COMMIT}/commit.o
-master_deps += ${SHA1}/sha1.o ${REFS}/refs.o ${CHECKOUT}/checkout.o ${MISC}/misc.o ${LOG}/log.o
+master_deps += ${SHA1}/sha1.o ${REFS}/refs.o ${CHECKOUT}/checkout.o ${REVERT}/revert.o ${MISC}/misc.o ${LOG}/log.o
 
 default: master
 

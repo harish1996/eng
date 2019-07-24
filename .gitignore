@@ -36,3 +36,6 @@
 
 # Eng folder
 *.eng
+
+# Executable file master
+src/master

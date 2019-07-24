@@ -64,6 +64,7 @@ int DEFAULT_COMMIT( std::string message )
 	TREE tree;
 	std::string hash, old_hash, branch;
 	int ret, commit_id, tmp;
+	char head_type;
 	commit new_cobj;
 
 	if( message.empty() ) {
@@ -71,13 +72,17 @@ int DEFAULT_COMMIT( std::string message )
 		return -COMMIT_FAILURE;
 	}
 
-	ret = getHEAD( branch );
+	ret = getHEAD( head_type, branch );
 	if( ret != GETHEAD_SUCCESS ){
 		return -COMMIT_FAILURE;
 	}
-	
-	if( ! branch.empty() ){
-		hash = read_branch( branch );	
+
+	if( ! branch.empty() ) {
+		if(0 == head_type)
+			hash = read_branch( branch );
+		else
+			hash = branch;
+
 		commit cobj(hash);
 		if( cobj.is_opened() == false ){
 			return COMMIT_FAILURE;
@@ -88,6 +93,7 @@ int DEFAULT_COMMIT( std::string message )
 		tree.open_tree( hash );
 	}
 	else {
+		head_type = 0;
 		commit_id = 0;
 		branch = "master";
 	}
@@ -126,8 +132,8 @@ int DEFAULT_COMMIT( std::string message )
 		return COMMIT_FAILURE;
 	}
 	// std::cout<<hash;
-	ret = writeHEAD(branch);
-	ret = write_branch(hash,branch);
+	ret = writeHEAD(head_type, branch);
+	ret = write_branch(hash, branch);
 
 	// tree.rec_cat();
 

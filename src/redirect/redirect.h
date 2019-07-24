@@ -12,11 +12,15 @@
 #include "../log/log.h"
 #include "../add_command/add.h"
 #include "../commit_command/commit_cmd.h"
+#include "../branch/branch.h"
+#include "../push_pull/push_pull.h"
+#include "../revert/revert.h"
 
 
 struct commands {
 	std::string name;
 	int (*redirect_function)(int argc, char *argv[]);
+	std::string help;
 };
 
 int redirect( int argc, char *argv[] );
