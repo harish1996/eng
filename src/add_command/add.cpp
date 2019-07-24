@@ -207,19 +207,49 @@ int STAGE::try_remove( std::string filepath )
 
 }
 
+#define DIRECTORY 0
+#define FILE 1
+#define NEITHER 2
+int check_file_or_directory( std::string filename )
+{
+	struct stat s;
+	int ret = stat( filename.c_str(), &s );
+	if( ret )
+		return NEITHER;
+	if( s.st_mode & S_IFDIR ){
+		return DIRECTORY;
+	}
+	else if( s.st_mode & S_IFREG ){
+		return FILE;
+	}
+	else
+		return NEITHER;
+}
+
 int DEFAULT_ADD( std::vector<std::string> filelist )
 {
 	TREE tree;
 	STAGE stager;
 	int tmp;
-	auto begin = filelist.cbegin();
+	auto begin = filelist.begin();
 	auto end=filelist.end();
+	std::string t;
 
 	tmp = get_current_tree( tree );
 	if( tmp != GCT_SUCCESS )
 		return -EDEFAULT_ADD_CURRENT_TREE;
 	for( ; begin != end; begin++ ){
-		tmp = stager.try_add( *begin, &tree );
+		tmp = check_file_or_directory( *begin );
+		if( tmp == NEITHER ){
+			std::cerr<<*begin<<" doesn't exist\n";
+			continue;
+		}
+		if( tmp == DIRECTORY ){ 
+			tmp = stager._try_add_tree( *begin, &tree );
+		}
+		else{
+			tmp = stager.try_add( *begin, &tree );
+		}
 		switch(tmp){
 			case TA_SUCCESS:
 				continue;
