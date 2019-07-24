@@ -10,12 +10,12 @@ enum error_codes {
 	ORIGIN_NOT_SET
 };
 
-static int push_to_origin( const std::string &origin );
-static int pull_from_origin( const std::string &origin );
+int push_to_origin( const std::string &origin );
+int pull_from_origin( const std::string &origin );
 
-static int update_origin( const std::string &origin );
+int update_origin( const std::string &origin );
 
-static int DEFAULT_PUSH();
-static int DEFAULT_PULL();
+int DEFAULT_PUSH();
+int DEFAULT_PULL();
 
 #endif
