@@ -7,6 +7,9 @@
 #include<stdio.h>
 #include<string.h>
 
+#define BRANCH 0
+#define HASH 1
+
 std::string read_branch( const std::string& );
 
 int write_branch( const std::string& , const std::string& );

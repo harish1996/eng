@@ -12,6 +12,7 @@
 #include "../log/log.h"
 #include "../add_command/add.h"
 #include "../commit_command/commit_cmd.h"
+#include "../branch/branch.h"
 
 
 struct commands {

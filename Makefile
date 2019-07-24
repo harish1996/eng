@@ -15,6 +15,7 @@ REDIRECT=${SRC}/redirect
 REFS=${SRC}/refs
 MISC=${SRC}/misc
 LOG=${SRC}/log
+BRANCH=${SRC}/branch
 # TREE=${SRC}/tree
 
 CPPFLAGS=-g -I ${BASE} -I ${GZSTREAM} -std=c++11
@@ -23,6 +24,7 @@ AR=ar
 
 master_deps = ${INIT}/init.o ${COMMIT_CMD}/commit_cmd.o ${ADD_CMD}/add.o ${TREE}/tree.o ${OBJECTS}/objects.o ${COMMIT}/commit.o
 master_deps += ${SHA1}/sha1.o ${REFS}/refs.o ${CHECKOUT}/checkout.o ${MISC}/misc.o ${REDIRECT}/redirect.o ${LOG}/log.o
+master_deps += ${BRANCH}/branch.o
 
 default: eng
 
